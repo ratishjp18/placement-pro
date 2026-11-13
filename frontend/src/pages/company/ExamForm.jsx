@@ -5,8 +5,8 @@ import { useToast } from '../../context'
 import { Field, Spinner } from '../../components/ui'
 
 const blank = {
-  title: '', duration_minutes: 60, negative_marking: '0.25', start_time: '', end_time: '', is_published: true,
-  count_quant: 3, count_logical: 3, count_verbal: 2, count_technical: 2,
+  title: '', duration_minutes: 30, negative_marking: '0.25', start_time: '', end_time: '', is_published: true,
+  count_quant: 8, count_logical: 8, count_verbal: 7, count_technical: 7,
 }
 
 export default function ExamForm() {

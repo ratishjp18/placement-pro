@@ -70,8 +70,9 @@ class ExamFlowTests(ApiTestCase):
                       {'question': qid, 'option': a.option_orders[str(qid)].index(want)})
         self.post(f'/api/attempts/{a.pk}/submit/')
         result = self.client.get(f'/api/attempts/{a.pk}/result/').json()
-        self.assertEqual(float(result['score']), 1 - 0.25)
-        self.assertEqual(result['rank'], 1)
+        self.assertEqual((result['attended'], result['total']), (2, 10))
+        # nothing that reveals right/wrong, rank, violations or sections
+        self.assertEqual(set(result), {'finished', 'title', 'attended', 'total'})
 
     def test_server_rejects_answers_after_deadline(self):
         a = self.start()

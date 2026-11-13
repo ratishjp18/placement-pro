@@ -167,19 +167,15 @@ def attempt_result(request, pk):
     attempt = services.ensure_current(_own_attempt(request, pk))
     if not attempt.is_submitted:
         return JsonResponse({'finished': False})
-    exam = attempt.exam
+    scores = list(attempt.section_scores.all())
+    attended = sum(x.correct + x.wrong for x in scores)
+    total = attended + sum(x.unanswered for x in scores)
+    # Students are told only how many questions they attended: never which were right or wrong.
     return JsonResponse({
         'finished': True,
-        'title': exam.title,
-        'score': str(attempt.score),
-        'total_marks': str(exam.total_marks),
-        'rank': attempt.rank,
-        'participants': exam.attempts.filter(status='submitted').count(),
-        'violations': attempt.violation_count,
-        'reason': attempt.get_submit_reason_display(),
-        'exam_open': exam.end_time > timezone.now(),
-        'sections': [{'label': s.get_section_display(), 'score': str(s.score), 'correct': s.correct,
-                      'wrong': s.wrong, 'unanswered': s.unanswered} for s in attempt.section_scores.all()],
+        'title': attempt.exam.title,
+        'attended': attended,
+        'total': total,
     })
 
 
