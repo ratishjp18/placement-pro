@@ -22,7 +22,7 @@ SECTION_ALIASES = {
 }
 
 
-def import_questions(uploaded_file, user):
+def import_questions(uploaded_file, company):
     """Import questions from a CSV. All-or-nothing: returns (created_count, errors)."""
     try:
         text = uploaded_file.read().decode('utf-8-sig')
@@ -67,7 +67,7 @@ def import_questions(uploaded_file, user):
             section=section, topic=row.get('topic', ''), difficulty=difficulty, marks=marks,
             text=row['text'], option_a=row['option_a'], option_b=row['option_b'],
             option_c=row['option_c'], option_d=row['option_d'],
-            correct_option=correct, created_by=user,
+            correct_option=correct, company=company,
         ))
 
     if errors:

@@ -11,10 +11,6 @@ class RoleRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-class AdminRequiredMixin(RoleRequiredMixin):
-    allowed_roles = ('admin',)
-
-
 class StudentRequiredMixin(RoleRequiredMixin):
     allowed_roles = ('student',)
 
@@ -22,6 +18,6 @@ class StudentRequiredMixin(RoleRequiredMixin):
 class CompanyRequiredMixin(RoleRequiredMixin):
     allowed_roles = ('company',)
 
-
-class AdminOrCompanyMixin(RoleRequiredMixin):
-    allowed_roles = ('admin', 'company')
+    @property
+    def company(self):
+        return self.request.user.company

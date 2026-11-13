@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db import models
 
 
@@ -26,8 +25,7 @@ class Question(models.Model):
     option_d = models.TextField()
     correct_option = models.CharField(max_length=1, choices=[(l, l) for l in 'ABCD'])
     is_active = models.BooleanField(default=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
-                                   on_delete=models.SET_NULL, related_name='+')
+    company = models.ForeignKey('accounts.Company', on_delete=models.CASCADE, related_name='questions')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -1,13 +1,10 @@
-from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView
 
-from .forms import CompanyForm, StudentForm
-from .models import Company, User
-from .permissions import AdminRequiredMixin
+from .forms import CompanySignupForm, StudentSignupForm
 
 
 class HomeView(View):
@@ -16,11 +13,7 @@ class HomeView(View):
     def get(self, request):
         if not request.user.is_authenticated:
             return redirect('login')
-        return redirect({
-            'admin': 'exam_list',
-            'company': 'company_home',
-            'student': 'student_dashboard',
-        }[request.user.role])
+        return redirect('exam_list' if request.user.is_company else 'student_dashboard')
 
 
 class RoleLoginView(LoginView):
@@ -28,37 +21,31 @@ class RoleLoginView(LoginView):
     redirect_authenticated_user = True
 
 
-class CompanyListView(AdminRequiredMixin, ListView):
-    model = Company
-    template_name = 'accounts/company_list.html'
-    queryset = Company.objects.select_related('user')
+class SignupView(CreateView):
+    template_name = 'accounts/signup.html'
+    role_label = ''
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('home')
+        return super().dispatch(request, *args, **kwargs)
 
-class CompanyCreateView(AdminRequiredMixin, CreateView):
-    form_class = CompanyForm
-    template_name = 'form.html'
-    success_url = reverse_lazy('company_list')
-    extra_context = {'title': 'Add company'}
-
-    def form_valid(self, form):
-        messages.success(self.request, 'Company login created.')
-        return super().form_valid(form)
-
-
-class StudentListView(AdminRequiredMixin, ListView):
-    template_name = 'accounts/student_list.html'
-    paginate_by = 50
-
-    def get_queryset(self):
-        return User.objects.filter(role=User.Role.STUDENT).order_by('roll_number', 'username')
-
-
-class StudentCreateView(AdminRequiredMixin, CreateView):
-    form_class = StudentForm
-    template_name = 'form.html'
-    success_url = reverse_lazy('student_list')
-    extra_context = {'title': 'Add student'}
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['role_label'] = self.role_label
+        return ctx
 
     def form_valid(self, form):
-        messages.success(self.request, 'Student created.')
-        return super().form_valid(form)
+        user = form.save()
+        login(self.request, user)
+        return redirect('home')
+
+
+class StudentSignupView(SignupView):
+    form_class = StudentSignupForm
+    role_label = 'Student'
+
+
+class CompanySignupView(SignupView):
+    form_class = CompanySignupForm
+    role_label = 'Company'

@@ -10,12 +10,12 @@
 </div>
 <div class="overflow-x-auto">
 <table class="data">
-  <tr><th>Rank</th><th>Roll no.</th><th>Name</th>{% if show_email %}<th>Email</th>{% endif %}
+  <tr><th>Rank</th><th>Roll no.</th><th>Name</th><th>Email</th>
     {% for _, label in sections %}<th>{{ label }}</th>{% endfor %}
     <th>Total</th><th>Violations</th><th>Ended by</th></tr>
   {% for r in rows %}
     <tr><td class="font-semibold">{{ r.attempt.rank }}</td><td>{{ r.student.roll_number|default:"—" }}</td>
-      <td>{{ r.student.display_name }}</td>{% if show_email %}<td>{{ r.student.email }}</td>{% endif %}
+      <td>{{ r.student.display_name }}</td><td>{{ r.student.email }}</td>
       {% for s in r.sections %}<td>{% if s %}{{ s.score }} <span class="text-xs text-slate-400">({{ s.correct }}✓ {{ s.wrong }}✗)</span>{% else %}0{% endif %}</td>{% endfor %}
       <td class="font-semibold">{{ r.attempt.score }}</td><td>{{ r.attempt.violation_count }}</td>
       <td class="text-sm">{{ r.attempt.get_submit_reason_display }}</td></tr>

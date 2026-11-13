@@ -13,15 +13,16 @@ class ExamForm(forms.ModelForm):
 
     class Meta:
         model = Exam
-        fields = ['title', 'company', 'duration_minutes', 'negative_marking',
+        fields = ['title', 'duration_minutes', 'negative_marking',
                   'start_time', 'end_time', 'is_published']
         widgets = {
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
             'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, company=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.company = company
         for f in ('start_time', 'end_time'):
             self.fields[f].input_formats = ['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M']
         existing = {}
@@ -42,10 +43,10 @@ class ExamForm(forms.ModelForm):
         if sum(counts.values()) == 0:
             raise forms.ValidationError('Choose at least one question.')
         for value, label in Section.choices:
-            available = Question.objects.filter(section=value, is_active=True).count()
+            available = Question.objects.filter(company=self.company, section=value, is_active=True).count()
             if counts[value] > available:
                 self.add_error(f'count_{value}',
-                               f'Only {available} active {label} questions in the bank.')
+                               f'Only {available} active {label} questions in your question bank.')
         if self.instance.pk and self.instance.attempts.exists():
             current = {s.section: s.num_questions for s in self.instance.sections.all()}
             if any(counts[v] != current.get(v, 0) for v in counts):
@@ -57,8 +58,7 @@ class ExamForm(forms.ModelForm):
     @transaction.atomic
     def save(self, commit=True):
         exam = super().save(commit=False)
-        if not exam.pk:
-            exam.created_by = getattr(self, 'user', None)
+        exam.company = self.company
         exam.save()
         for value, n in self.counts.items():
             ExamSection.objects.update_or_create(
@@ -67,7 +67,7 @@ class ExamForm(forms.ModelForm):
             if current.count() == n:
                 continue
             current.delete()
-            ids = list(Question.objects.filter(section=value, is_active=True).values_list('id', flat=True))
+            ids = list(Question.objects.filter(company=self.company, section=value, is_active=True).values_list('id', flat=True))
             ExamQuestion.objects.bulk_create(
                 ExamQuestion(exam=exam, question_id=qid) for qid in random.sample(ids, n))
         for order, eq in enumerate(exam.exam_questions.order_by('question__section', 'id')):

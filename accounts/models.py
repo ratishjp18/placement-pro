@@ -4,16 +4,11 @@ from django.db import models
 
 class User(AbstractUser):
     class Role(models.TextChoices):
-        ADMIN = 'admin', 'Placement officer'
         COMPANY = 'company', 'Company'
         STUDENT = 'student', 'Student'
 
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.STUDENT)
     roll_number = models.CharField(max_length=30, unique=True, null=True, blank=True)
-
-    @property
-    def is_placement_admin(self):
-        return self.role == self.Role.ADMIN
 
     @property
     def is_company(self):

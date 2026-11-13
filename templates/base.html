@@ -29,13 +29,9 @@
     <a href="{% url 'home' %}" class="font-bold text-indigo-600 text-lg">PlacementPro</a>
     {% if user.is_authenticated %}
       <nav class="flex gap-4 text-sm flex-1">
-        {% if user.is_placement_admin %}
-          <a href="{% url 'exam_list' %}" class="hover:text-indigo-600">Exams</a>
-          <a href="{% url 'question_list' %}" class="hover:text-indigo-600">Questions</a>
-          <a href="{% url 'company_list' %}" class="hover:text-indigo-600">Companies</a>
-          <a href="{% url 'student_list' %}" class="hover:text-indigo-600">Students</a>
-        {% elif user.is_company %}
-          <a href="{% url 'company_home' %}" class="hover:text-indigo-600">My drives</a>
+        {% if user.is_company %}
+          <a href="{% url 'exam_list' %}" class="hover:text-indigo-600">My exams</a>
+          <a href="{% url 'question_list' %}" class="hover:text-indigo-600">Question bank</a>
         {% else %}
           <a href="{% url 'student_dashboard' %}" class="hover:text-indigo-600">Dashboard</a>
         {% endif %}

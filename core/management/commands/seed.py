@@ -59,16 +59,10 @@ QUESTIONS = [
 
 
 class Command(BaseCommand):
-    help = 'Create demo data: 1 admin, 1 company, 5 students, 40 questions and a sample exam.'
+    help = 'Create demo data: 1 company, 5 students, 40 questions (owned by the company) and a sample exam.'
 
     @transaction.atomic
     def handle(self, *args, **options):
-        admin, _ = User.objects.get_or_create(
-            username='admin', defaults={'role': 'admin', 'is_staff': True, 'is_superuser': True,
-                                        'first_name': 'Placement', 'last_name': 'Officer'})
-        admin.set_password('admin123')
-        admin.save()
-
         company_user, _ = User.objects.get_or_create(
             username='acme', defaults={'role': 'company', 'first_name': 'Acme Corp'})
         company_user.set_password('company123')
@@ -87,15 +81,15 @@ class Command(BaseCommand):
         created = 0
         for sec, topic, diff, text, a, b, c, d, correct in QUESTIONS:
             _, new = Question.objects.get_or_create(
-                text=text, section=sec,
+                company=company, text=text, section=sec,
                 defaults=dict(topic=topic, difficulty=diff, marks=1, option_a=a, option_b=b,
-                              option_c=c, option_d=d, correct_option=correct, created_by=admin))
+                              option_c=c, option_d=d, correct_option=correct, company=company))
             created += new
 
-        if not Exam.objects.filter(title='Sample Aptitude Test').exists():
+        if not Exam.objects.filter(company=company, title='Sample Aptitude Test').exists():
             now = timezone.now()
-            form = ExamForm(data={
-                'title': 'Sample Aptitude Test', 'company': company.pk, 'duration_minutes': 30,
+            form = ExamForm(company=company, data={
+                'title': 'Sample Aptitude Test', 'duration_minutes': 30,
                 'negative_marking': '0.25',
                 'start_time': (now - timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M'),
                 'end_time': (now + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M'),
@@ -103,10 +97,9 @@ class Command(BaseCommand):
                 'count_quant': 5, 'count_logical': 5, 'count_verbal': 5, 'count_technical': 5,
             })
             if form.is_valid():
-                form.user = admin
                 form.save()
             else:
                 self.stderr.write(f'Could not create sample exam: {form.errors.as_json()}')
 
         self.stdout.write(self.style.SUCCESS(f'Seeded ({created} new questions).'))
-        self.stdout.write('Logins -> admin/admin123, acme/company123, student1..5/student123')
+        self.stdout.write('Logins -> acme/company123 (company), student1..5/student123 (students)')

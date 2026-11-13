@@ -1,16 +1,15 @@
 # PlacementPro
 
-Online aptitude exam portal for campus placement drives. Built with Django, Tailwind (CDN) and vanilla JS.
+Online aptitude exam portal for campus placement drives. A **company** sets up and runs the test; many **students** sit it. Built with Django, Tailwind (CDN) and vanilla JS.
 
 ## Roles
 
 | Role | Can do |
 |------|--------|
-| **Placement officer (admin)** | Manage the question bank (CSV import), create exams, add companies and students, view ranked results and export CSV |
-| **Company** | Sees only its own drives; views ranked, section-wise results and exports CSV. Cannot see questions or answers |
-| **Student** | Dashboard (upcoming / active / completed), takes exams, sees score, section breakdown and rank |
+| **Company** | Registers itself, builds its own question bank (manual or CSV import), creates exams, sees ranked section-wise results of its own exams and exports them to CSV. Cannot see other companies' data |
+| **Student** | Registers, sees upcoming / active / completed exams, takes them, sees score, section breakdown and rank |
 
-Accounts are created by the placement officer (no self-registration).
+There is no placement-officer role. Both roles sign up themselves from the login page.
 
 ## Setup
 
@@ -20,7 +19,7 @@ python -m venv .venv
 pip install -r requirements.txt
 copy .env.example .env            # optional; defaults to SQLite
 python manage.py migrate
-python manage.py seed             # demo data
+python manage.py seed             # optional demo data
 python manage.py runserver
 ```
 
@@ -28,11 +27,16 @@ Open http://127.0.0.1:8000/
 
 **Demo logins (from `seed`)**
 
-- Admin: `admin` / `admin123`
 - Company: `acme` / `company123`
-- Students: `student1` … `student5` / `student123`
+- Students: `student1` ... `student5` / `student123`
 
-`seed` creates 1 admin, 1 company, 5 students, 40 questions (10 per section) and a "Sample Aptitude Test" that is open for a week. It is safe to re-run. Change the passwords before any real use.
+`seed` creates 1 company, 5 students, 40 questions (10 per section, owned by the company) and a "Sample Aptitude Test" open for a week. Safe to re-run. Change the passwords before any real use.
+
+## Typical flow
+
+1. Company signs in, adds questions (or imports a CSV), then creates an exam: duration, negative marking, start/end window, and how many random questions per section. Tick **Is published** so students can see it.
+2. Students sign in, open the exam while the window is active, and take it.
+3. Company opens **Results** for the ranking and exports CSV.
 
 ## PostgreSQL
 
@@ -57,7 +61,7 @@ Limits: browser-based proctoring can deter, not prevent, cheating (e.g. a second
 
 ## Scoring and rank
 
-Correct = + question marks; wrong = − marks × negative-marking fraction (e.g. 0.25); unanswered = 0.
+Correct = + question marks; wrong = - marks x negative-marking fraction (e.g. 0.25); unanswered = 0.
 Rank is by total score, ties broken by earlier submission time.
 
 ## Tests
@@ -70,3 +74,4 @@ python manage.py test
 
 - Tailwind is loaded from the CDN for simplicity. For production, build CSS with the Tailwind CLI and serve it as a static file.
 - Set `DEBUG=0`, a real `SECRET_KEY` and `ALLOWED_HOSTS`; run `collectstatic` and use a proper WSGI server.
+- Optional: `python manage.py createsuperuser` gives access to Django's built-in `/django-admin/` for emergencies.
