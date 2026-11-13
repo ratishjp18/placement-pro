@@ -6,7 +6,7 @@ import { Field, Spinner } from '../../components/ui'
 
 const blank = {
   title: '', duration_minutes: 60, negative_marking: '0.25', start_time: '', end_time: '', is_published: true,
-  count_quant: 5, count_logical: 5, count_verbal: 5, count_technical: 5,
+  count_quant: 3, count_logical: 3, count_verbal: 2, count_technical: 2,
 }
 
 export default function ExamForm() {

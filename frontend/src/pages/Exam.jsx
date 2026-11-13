@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
-import { Spinner } from '../components/ui'
+import { Icon, Logo, Spinner } from '../components/ui'
 
 /**
  * The exam screen. The server owns the timer, the scoring and the violation count;
@@ -20,6 +20,7 @@ export default function Exam() {
   const [gate, setGate] = useState(true)
   const [gateAgain, setGateAgain] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [reviewing, setReviewing] = useState(false) // final review page before submitting
 
   const endAt = useRef(0)
   const finished = useRef(false)
@@ -137,7 +138,9 @@ export default function Exam() {
     setAnswers((a) => a.map((x, i) => (i === idx ? next : x)))
     post('answer', { question: q.id, option: next.selected, marked: next.marked }).then(handle)
   }
-  const go = (i) => setIdx(Math.max(0, Math.min(qs.length - 1, i)))
+  const go = (i) => { setReviewing(false); setIdx(Math.max(0, Math.min(qs.length - 1, i))) }
+  const isLast = idx === qs.length - 1
+  const next = () => (isLast ? setReviewing(true) : go(idx + 1))
 
   const count = { answered: 0, visited: 0, marked: 0, fresh: 0 }
   const status = (s) => {
@@ -157,41 +160,84 @@ export default function Exam() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between card px-4 py-3 mb-4">
-        <div className="font-semibold">{data.title}</div>
-        <div className="flex items-center gap-5 text-sm">
-          <span>Violations: <strong>{violations}</strong>/{data.max_violations}</span>
-          <span className={`text-lg font-mono font-bold ${left !== null && left <= 60 ? 'text-red-600' : ''}`}>{mm}:{ss}</span>
+      <div className="card px-5 py-3 mb-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <Logo size={30} />
+            <span className="hidden sm:block w-px h-6 bg-slate-200" />
+            <span className="font-semibold truncate">{data.title}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm shrink-0">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${violations > 0 ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>
+              <Icon name="shield" size={14} /> {violations}/{data.max_violations}
+            </span>
+            <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-mono text-lg font-bold ${left !== null && left <= 60 ? 'bg-rose-50 text-rose-600' : 'bg-indigo-50 text-indigo-700'}`}>
+              <Icon name="clock" size={17} /> {mm}:{ss}
+            </span>
+          </div>
+        </div>
+        <div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+          <div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
+               style={{ width: `${((answers.length - unanswered) / Math.max(1, answers.length)) * 100}%` }} />
         </div>
       </div>
-      {warn && <div className="mb-4 px-4 py-2 rounded-lg bg-amber-100 text-amber-900 text-sm">{warn}</div>}
+      {warn && <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm font-medium">⚠ {warn}</div>}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_16rem]">
+        {reviewing ? (
+          <section className="card p-5">
+            <h2 className="text-xl font-extrabold mb-1">Review your answers</h2>
+            <p className="text-sm text-slate-500 mb-4">
+              {answers.length - unanswered} answered · {unanswered} not answered · {count.marked} marked for review.
+              Click a question to change its answer.
+            </p>
+            <div className="divide-y border rounded-lg mb-5">
+              {qs.map((question, i) => {
+                const a = answers[i]
+                return (
+                  <button key={question.id} onClick={() => go(i)} className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-indigo-50">
+                    <span className="w-7 h-7 shrink-0 rounded-md bg-slate-100 text-xs font-semibold flex items-center justify-center">{i + 1}</span>
+                    <span className="flex-1 text-sm truncate">{question.text}</span>
+                    {a.marked && <span className="badge badge-upcoming">Review</span>}
+                    {a.selected !== null
+                      ? <span className="badge badge-active">{String.fromCharCode(65 + a.selected)}. {question.options[a.selected].slice(0, 24)}</span>
+                      : <span className="badge badge-draft">Not answered</span>}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="flex gap-2">
+              <button className="btn btn-secondary" onClick={() => go(qs.length - 1)}>Back to questions</button>
+              <button className="btn" onClick={() => setConfirming(true)}>Submit test</button>
+            </div>
+          </section>
+        ) : (
         <section className="card p-5">
-          <div className="flex justify-between text-sm text-slate-500 mb-3">
-            <span>{q.section_label}</span>
-            <span>Question {idx + 1} of {qs.length} · {q.marks} mark(s)</span>
+          <div className="flex items-center justify-between mb-4">
+            <span className="badge badge-upcoming">{q.section_label}</span>
+            <span className="text-sm text-slate-500">Question <strong className="text-slate-800">{idx + 1}</strong> of {qs.length} · {q.marks} mark(s)</span>
           </div>
-          <p className="text-lg mb-5 whitespace-pre-wrap">{q.text}</p>
+          <p className="text-[1.15rem] font-medium leading-relaxed mb-6 whitespace-pre-wrap">{q.text}</p>
           <div className="space-y-2 mb-6">
             {q.options.map((text, pos) => (
               <button key={pos} className={`opt ${cur.selected === pos ? 'sel' : ''}`} onClick={() => update({ selected: pos })}>
-                <strong>{String.fromCharCode(65 + pos)}.</strong><span>{text}</span>
+                <span className="opt-letter">{String.fromCharCode(65 + pos)}</span><span>{text}</span>
               </button>
             ))}
           </div>
           <div className="flex flex-wrap gap-2">
             <button className="btn btn-secondary" disabled={idx === 0} onClick={() => go(idx - 1)}>Previous</button>
             <button className="btn btn-secondary" onClick={() => update({ selected: null })}>Clear answer</button>
-            <button className="btn btn-secondary" onClick={() => { update({ marked: !cur.marked }); go(idx + 1) }}>
-              {cur.marked ? 'Unmark review' : 'Mark for review'} &amp; next
+            <button className="btn btn-secondary" onClick={() => { update({ marked: !cur.marked }); next() }}>
+              {cur.marked ? 'Unmark review' : 'Mark for review'} &amp; {isLast ? 'review' : 'next'}
             </button>
-            <button className="btn" onClick={() => go(idx + 1)}>Save &amp; next</button>
+            <button className="btn" onClick={next}>{isLast ? 'Review answers' : 'Save & next'}</button>
           </div>
         </section>
+        )}
 
-        <aside className="card p-4 h-fit">
-          <div className="text-sm font-medium mb-2">Question palette</div>
+        <aside className="card p-4 h-fit lg:sticky lg:top-4">
+          <div className="text-sm font-bold mb-3">Question palette</div>
           <div className="flex flex-wrap gap-1.5 mb-4">{palette}</div>
           <div className="text-xs text-slate-500 space-y-1 mb-4">
             <div><span className="pal answered inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Answered ({count.answered})</div>
@@ -199,14 +245,15 @@ export default function Exam() {
             <div><span className="pal marked inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Marked for review ({count.marked})</div>
             <div><span className="pal inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Not visited ({count.fresh})</div>
           </div>
-          <button className="btn w-full" onClick={() => setConfirming(true)}>Submit exam</button>
+          <button className="btn w-full" onClick={() => setReviewing(true)}>Review &amp; submit</button>
         </aside>
       </div>
 
       {gate && (
         <div className="fixed inset-0 bg-slate-900/90 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-xl p-6 max-w-md text-center">
-            <h2 className="text-lg font-semibold mb-2">{gateAgain ? 'Return to fullscreen' : 'Ready to begin?'}</h2>
+          <div className="bg-white rounded-2xl p-8 max-w-md text-center shadow-2xl">
+            <div className="flex justify-center mb-4"><Logo size={40} /></div>
+            <h2 className="text-xl font-extrabold mb-2">{gateAgain ? 'Return to fullscreen' : 'Ready to begin?'}</h2>
             <p className="text-sm text-slate-600 mb-4">
               The exam runs in fullscreen. Leaving fullscreen or switching tabs counts as a violation.
               The timer is already running on the server.
@@ -218,8 +265,8 @@ export default function Exam() {
 
       {confirming && (
         <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-xl p-6 max-w-sm">
-            <h2 className="text-lg font-semibold mb-2">Submit exam?</h2>
+          <div className="bg-white rounded-2xl p-7 max-w-sm shadow-2xl">
+            <h2 className="text-lg font-extrabold mb-2">Submit test?</h2>
             <p className="text-sm text-slate-600 mb-4">
               {unanswered} question(s) unanswered, {count.marked} marked for review. You cannot change answers after submitting.
             </p>

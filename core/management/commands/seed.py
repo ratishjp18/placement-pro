@@ -94,7 +94,7 @@ class Command(BaseCommand):
                 'start_time': (now - timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M'),
                 'end_time': (now + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M'),
                 'is_published': 'on',
-                'count_quant': 5, 'count_logical': 5, 'count_verbal': 5, 'count_technical': 5,
+                'count_quant': 3, 'count_logical': 3, 'count_verbal': 2, 'count_technical': 2,
             })
             if form.is_valid():
                 form.save()
