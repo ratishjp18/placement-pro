@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-2xl bg-white border rounded-lg p-6">
+  <h1 class="text-xl font-semibold mb-2">Import questions from CSV</h1>
+  <p class="text-sm text-slate-600 mb-1">Required columns:</p>
+  <code class="block text-xs bg-slate-100 p-2 rounded mb-2">section, topic, difficulty, marks, text, option_a, option_b, option_c, option_d, correct_option</code>
+  <p class="text-sm text-slate-600 mb-4">Sections: quant, logical, verbal, technical. Difficulty: easy, medium, hard.
+    <a class="text-indigo-600" href="{% url 'question_sample_csv' %}">Download sample</a>. The import is all-or-nothing: any bad row cancels it.</p>
+  {% if errors %}
+    <div class="bg-red-50 border border-red-200 text-red-800 text-sm rounded p-3 mb-4">
+      <p class="font-medium mb-1">Nothing was imported:</p>
+      <ul class="list-disc pl-5">{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" class="space-y-4">
+    {% csrf_token %}{{ form.file }}
+    <div><button class="btn">Import</button></div>
+  </form>
+</div>
+{% endblock %}

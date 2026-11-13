@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-2xl">
+  <h1 class="text-xl font-semibold mb-1">{{ exam.title }} — result</h1>
+  <p class="text-sm text-slate-500 mb-4">Ended: {{ attempt.get_submit_reason_display }}</p>
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="bg-white border rounded-lg p-4"><div class="text-xs text-slate-500">Score</div>
+      <div class="text-2xl font-bold">{{ attempt.score }} <span class="text-sm font-normal text-slate-400">/ {{ total_marks }}</span></div></div>
+    <div class="bg-white border rounded-lg p-4"><div class="text-xs text-slate-500">Rank</div>
+      <div class="text-2xl font-bold">{{ attempt.rank }} <span class="text-sm font-normal text-slate-400">of {{ participants }}</span></div></div>
+    <div class="bg-white border rounded-lg p-4"><div class="text-xs text-slate-500">Violations</div>
+      <div class="text-2xl font-bold">{{ attempt.violation_count }}</div></div>
+  </div>
+  {% if exam_open %}<p class="text-xs text-amber-700 mb-3">The exam window is still open, so ranks can change as others submit.</p>{% endif %}
+  <table class="data">
+    <tr><th>Section</th><th>Score</th><th>Correct</th><th>Wrong</th><th>Unanswered</th></tr>
+    {% for s in section_scores %}
+      <tr><td>{{ s.get_section_display }}</td><td>{{ s.score }}</td><td>{{ s.correct }}</td><td>{{ s.wrong }}</td><td>{{ s.unanswered }}</td></tr>
+    {% endfor %}
+  </table>
+  <a href="{% url 'student_dashboard' %}" class="btn btn-secondary mt-5">Back to dashboard</a>
+</div>
+{% endblock %}

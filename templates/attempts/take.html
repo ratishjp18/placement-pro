@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% block title %}{{ attempt.exam.title }}{% endblock %}
+{% block nav %}{% endblock %}
+{% block content %}
+<style>
+  .pal { width: 2.25rem; height: 2.25rem; border-radius: .375rem; font-size: .8rem; border: 1px solid #cbd5e1; background:#fff; }
+  .pal.visited { background:#fecaca; border-color:#f87171; }
+  .pal.answered { background:#bbf7d0; border-color:#4ade80; }
+  .pal.marked { background:#ddd6fe; border-color:#8b5cf6; }
+  .pal.current { outline: 2px solid #4f46e5; outline-offset: 1px; }
+  .opt { display:flex; gap:.75rem; width:100%; text-align:left; padding:.75rem 1rem; border:1px solid #cbd5e1; border-radius:.5rem; background:#fff; }
+  .opt:hover { border-color:#6366f1; }
+  .opt.sel { border-color:#4f46e5; background:#eef2ff; }
+</style>
+
+<div id="app" class="max-w-6xl mx-auto">
+  <div class="flex items-center justify-between bg-white border rounded-lg px-4 py-3 mb-4">
+    <div class="font-semibold">{{ attempt.exam.title }}</div>
+    <div class="flex items-center gap-5 text-sm">
+      <span>Violations: <strong id="viol">0</strong>/<span id="maxviol"></span></span>
+      <span class="text-lg font-mono font-bold" id="timer">--:--</span>
+    </div>
+  </div>
+  <div id="warn" class="hidden mb-4 px-4 py-2 rounded bg-amber-100 text-amber-900 text-sm"></div>
+
+  <div class="grid gap-4 lg:grid-cols-[1fr_16rem]">
+    <section class="bg-white border rounded-lg p-5">
+      <div class="flex justify-between text-sm text-slate-500 mb-3">
+        <span id="qsection"></span><span id="qmeta"></span>
+      </div>
+      <p id="qtext" class="text-lg mb-5" style="white-space:pre-wrap"></p>
+      <div id="options" class="space-y-2 mb-6"></div>
+      <div class="flex flex-wrap gap-2">
+        <button class="btn btn-secondary" id="prev">Previous</button>
+        <button class="btn btn-secondary" id="clear">Clear answer</button>
+        <button class="btn btn-secondary" id="mark">Mark for review &amp; next</button>
+        <button class="btn" id="next">Save &amp; next</button>
+      </div>
+    </section>
+
+    <aside class="bg-white border rounded-lg p-4 h-fit">
+      <div class="text-sm font-medium mb-2">Question palette</div>
+      <div id="palette" class="flex flex-wrap gap-1.5 mb-4"></div>
+      <div class="text-xs text-slate-500 space-y-1 mb-4">
+        <div><span class="pal answered inline-block align-middle" style="width:.9rem;height:.9rem"></span> Answered (<span id="c-ans">0</span>)</div>
+        <div><span class="pal visited inline-block align-middle" style="width:.9rem;height:.9rem"></span> Not answered (<span id="c-vis">0</span>)</div>
+        <div><span class="pal marked inline-block align-middle" style="width:.9rem;height:.9rem"></span> Marked for review (<span id="c-mark">0</span>)</div>
+        <div><span class="pal inline-block align-middle" style="width:.9rem;height:.9rem"></span> Not visited (<span id="c-new">0</span>)</div>
+      </div>
+      <button class="btn w-full" id="submit">Submit exam</button>
+    </aside>
+  </div>
+</div>
+
+<!-- start / re-enter fullscreen overlay -->
+<div id="gate" class="fixed inset-0 bg-slate-900/90 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 max-w-md text-center">
+    <h2 class="text-lg font-semibold mb-2" id="gate-title">Ready to begin?</h2>
+    <p class="text-sm text-slate-600 mb-4" id="gate-text">The exam runs in fullscreen. Leaving fullscreen or switching tabs counts as a violation. The timer is already running on the server.</p>
+    <button class="btn" id="gate-btn">Enter fullscreen &amp; continue</button>
+  </div>
+</div>
+
+<!-- submit confirmation -->
+<div id="confirm" class="hidden fixed inset-0 bg-slate-900/60 flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 max-w-sm">
+    <h2 class="text-lg font-semibold mb-2">Submit exam?</h2>
+    <p class="text-sm text-slate-600 mb-4" id="confirm-text"></p>
+    <div class="flex gap-2 justify-end">
+      <button class="btn btn-secondary" id="confirm-no">Go back</button>
+      <button class="btn" id="confirm-yes">Submit</button>
+    </div>
+  </div>
+</div>
+
+{{ payload|json_script:"exam-data" }}
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById('exam-data').textContent);
+  const urls = {
+    answer: "{% url 'attempt_answer' attempt.pk %}",
+    violation: "{% url 'attempt_violation' attempt.pk %}",
+    submit: "{% url 'attempt_submit' attempt.pk %}",
+    result: "{% url 'attempt_result' attempt.pk %}",
+  };
+  const csrf = "{{ csrf_token }}";
+  const qs = data.questions;
+  const state = qs.map(q => ({ selected: q.selected, marked: q.marked, visited: q.selected !== null || q.marked }));
+  let idx = 0, active = false, finished = false;
+  const $ = id => document.getElementById(id);
+
+  // ---- server calls (serialised so saves arrive in order) ----
+  let chain = Promise.resolve();
+  function post(url, body) {
+    const p = chain.then(() => fetch(url, {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+      body: JSON.stringify(body || {}),
+    }).then(r => r.json())).catch(() => null);
+    chain = p.then(() => {});
+    return p;
+  }
+  function handle(resp) {
+    if (!resp) return;
+    if (typeof resp.remaining === 'number') syncTimer(resp.remaining);
+    if (typeof resp.violations === 'number') $('viol').textContent = resp.violations;
+    if (resp.finished) { finished = true; window.location.href = resp.url || urls.result; }
+  }
+  function save(i) {
+    const q = qs[i], s = state[i];
+    post(urls.answer, { question: q.id, option: s.selected, marked: s.marked }).then(handle);
+  }
+
+  // ---- timer (display only; the server is the authority) ----
+  let endAt = performance.now() + data.remaining * 1000;
+  function syncTimer(sec) { endAt = performance.now() + sec * 1000; }
+  function tick() {
+    if (finished) return;
+    const left = Math.max(0, Math.ceil((endAt - performance.now()) / 1000));
+    const m = String(Math.floor(left / 60)).padStart(2, '0'), s = String(left % 60).padStart(2, '0');
+    $('timer').textContent = m + ':' + s;
+    $('timer').style.color = left <= 60 ? '#dc2626' : '';
+    if (left === 0) { finished = true; post(urls.submit).then(r => { window.location.href = (r && r.url) || urls.result; }); }
+  }
+  setInterval(tick, 250); tick();
+
+  // ---- rendering ----
+  function render() {
+    const q = qs[idx];
+    state[idx].visited = true;
+    $('qsection').textContent = q.section_label;
+    $('qmeta').textContent = 'Question ' + (idx + 1) + ' of ' + qs.length + ' · ' + q.marks + ' mark(s)';
+    $('qtext').textContent = q.text;
+    const box = $('options'); box.innerHTML = '';
+    q.options.forEach((text, pos) => {
+      const b = document.createElement('button');
+      b.className = 'opt' + (state[idx].selected === pos ? ' sel' : '');
+      const label = document.createElement('strong'); label.textContent = String.fromCharCode(65 + pos) + '.';
+      const span = document.createElement('span'); span.textContent = text; span.style.whiteSpace = 'pre-wrap';
+      b.append(label, span);
+      b.onclick = () => { state[idx].selected = pos; save(idx); render(); };
+      box.appendChild(b);
+    });
+    $('prev').disabled = idx === 0;
+    renderPalette();
+  }
+  function renderPalette() {
+    const pal = $('palette'); pal.innerHTML = '';
+    let a = 0, v = 0, m = 0, n = 0;
+    state.forEach((s, i) => {
+      let cls = 'pal';
+      if (s.marked) { cls += ' marked'; m++; }
+      else if (s.selected !== null) { cls += ' answered'; a++; }
+      else if (s.visited) { cls += ' visited'; v++; }
+      else n++;
+      if (i === idx) cls += ' current';
+      const b = document.createElement('button');
+      b.className = cls; b.textContent = i + 1;
+      b.onclick = () => go(i);
+      pal.appendChild(b);
+    });
+    $('c-ans').textContent = a; $('c-vis').textContent = v; $('c-mark').textContent = m; $('c-new').textContent = n;
+  }
+  function go(i) { idx = Math.max(0, Math.min(qs.length - 1, i)); render(); }
+
+  $('next').onclick = () => { save(idx); go(idx + 1); };
+  $('prev').onclick = () => go(idx - 1);
+  $('clear').onclick = () => { state[idx].selected = null; save(idx); render(); };
+  $('mark').onclick = () => { state[idx].marked = !state[idx].marked; save(idx); go(idx + 1); };
+
+  // ---- submit confirmation ----
+  $('submit').onclick = () => {
+    const unanswered = state.filter(s => s.selected === null).length;
+    const marked = state.filter(s => s.marked).length;
+    $('confirm-text').textContent = unanswered + ' question(s) unanswered, ' + marked +
+      ' marked for review. You cannot change answers after submitting.';
+    $('confirm').classList.remove('hidden');
+  };
+  $('confirm-no').onclick = () => $('confirm').classList.add('hidden');
+  $('confirm-yes').onclick = () => { finished = true; post(urls.submit).then(r => { window.location.href = (r && r.url) || urls.result; }); };
+
+  // ---- integrity: fullscreen + tab switches (the server counts and decides) ----
+  $('maxviol').textContent = data.max_violations;
+  $('viol').textContent = data.violations;
+  const canFS = !!document.documentElement.requestFullscreen;
+  let lastEvent = 0;
+  function violation(type, msg) {
+    if (!active || finished) return;
+    const now = Date.now();
+    if (now - lastEvent < 1500) return;   // one physical action can fire several events
+    lastEvent = now;
+    const w = $('warn'); w.textContent = msg + ' This has been logged.'; w.classList.remove('hidden');
+    post(urls.violation, { type: type }).then(handle);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) violation('tab_switch', 'You left the exam tab.');
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && active) {
+      violation('fullscreen_exit', 'You exited fullscreen.');
+      showGate(true);
+    }
+  });
+  function showGate(again) {
+    $('gate').classList.remove('hidden');
+    if (again) { $('gate-title').textContent = 'Return to fullscreen'; }
+  }
+  $('gate-btn').onclick = async () => {
+    try { if (canFS) await document.documentElement.requestFullscreen(); } catch (e) {}
+    active = true;
+    $('gate').classList.add('hidden');
+  };
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  render();
+})();
+</script>
+{% endblock %}

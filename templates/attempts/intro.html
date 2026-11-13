@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-2xl bg-white border rounded-lg p-6">
+  <h1 class="text-xl font-semibold mb-1">{{ exam.title }}</h1>
+  <p class="text-sm text-slate-500 mb-4">{{ exam.company|default:"Practice test" }}</p>
+  <dl class="grid grid-cols-2 gap-2 text-sm mb-4">
+    <dt class="text-slate-500">Duration</dt><dd>{{ exam.duration_minutes }} minutes</dd>
+    <dt class="text-slate-500">Questions</dt><dd>{{ exam.question_count }}</dd>
+    <dt class="text-slate-500">Total marks</dt><dd>{{ total_marks }}</dd>
+    <dt class="text-slate-500">Negative marking</dt>
+    <dd>{% if exam.negative_marking > 0 %}{{ exam.negative_marking }} × marks per wrong answer{% else %}None{% endif %}</dd>
+    <dt class="text-slate-500">Sections</dt>
+    <dd>{% for s in sections %}{{ s.get_section_display }} ({{ s.num_questions }}){% if not forloop.last %}, {% endif %}{% endfor %}</dd>
+  </dl>
+  <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1 mb-5">
+    <li>You get <strong>one attempt</strong>. The timer runs on the server and continues even if you refresh or close the page.</li>
+    <li>The exam runs in fullscreen. Switching tabs or leaving fullscreen is logged as a violation.</li>
+    <li>After <strong>{{ max_violations }} violations</strong> the exam is submitted automatically.</li>
+    <li>Answers are saved automatically. The exam is submitted when the time ends.</li>
+  </ul>
+  {% if exam.status == 'active' %}
+    <form method="post">{% csrf_token %}
+      <button class="btn">{% if attempt %}Resume exam{% else %}Start exam{% endif %}</button>
+    </form>
+  {% else %}
+    <p class="text-sm text-amber-700">This exam is not open right now (window: {{ exam.start_time|date:"d M H:i" }} – {{ exam.end_time|date:"d M H:i" }}).</p>
+  {% endif %}
+</div>
+{% endblock %}

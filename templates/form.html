@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-2xl bg-white border rounded-lg p-6">
+  <h1 class="text-xl font-semibold mb-4">{{ title }}</h1>
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="field">
+        {% if field.field.widget.input_type == 'checkbox' %}
+          <label class="flex items-center gap-2 text-sm">{{ field }} {{ field.label }}</label>
+        {% else %}
+          <label class="block text-sm font-medium mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+        {% endif %}
+        {% if field.help_text %}<p class="text-xs text-slate-500 mt-1">{{ field.help_text }}</p>{% endif %}
+        {% for e in field.errors %}<p class="text-xs text-red-600 mt-1">{{ e }}</p>{% endfor %}
+      </div>
+    {% endfor %}
+    <div class="flex gap-2 pt-2">
+      <button class="btn">Save</button>
+      <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

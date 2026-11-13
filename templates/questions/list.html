@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-semibold">Question bank <span class="text-sm text-slate-500">({{ paginator.count }})</span></h1>
+  <div class="flex gap-2">
+    <a href="{% url 'question_import' %}" class="btn btn-secondary">Import CSV</a>
+    <a href="{% url 'question_create' %}" class="btn">Add question</a>
+  </div>
+</div>
+<form method="get" class="field flex flex-wrap gap-2 mb-4">
+  <input name="q" placeholder="Search text" value="{{ filters.q }}" style="width:16rem">
+  <select name="section" style="width:11rem"><option value="">All sections</option>
+    {% for v, l in sections %}<option value="{{ v }}" {% if filters.section == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <select name="difficulty" style="width:11rem"><option value="">All difficulties</option>
+    {% for v, l in difficulties %}<option value="{{ v }}" {% if filters.difficulty == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <button class="btn btn-secondary">Filter</button>
+</form>
+<table class="data">
+  <tr><th>Question</th><th>Section</th><th>Topic</th><th>Level</th><th>Marks</th><th>Ans</th><th></th></tr>
+  {% for q in object_list %}
+    <tr class="{% if not q.is_active %}opacity-50{% endif %}">
+      <td>{{ q.text|truncatechars:90 }}</td><td>{{ q.get_section_display }}</td><td>{{ q.topic }}</td>
+      <td>{{ q.get_difficulty_display }}</td><td>{{ q.marks }}</td><td>{{ q.correct_option }}</td>
+      <td class="whitespace-nowrap"><a class="text-indigo-600" href="{% url 'question_edit' q.pk %}">Edit</a> ·
+        <a class="text-red-600" href="{% url 'question_delete' q.pk %}">Delete</a></td>
+    </tr>
+  {% empty %}<tr><td colspan="7" class="text-slate-500">No questions found.</td></tr>{% endfor %}
+</table>
+{% if is_paginated %}
+<div class="mt-4 flex gap-3 text-sm">
+  {% if page_obj.has_previous %}<a class="text-indigo-600" href="?{{ query_string }}&page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+  <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a class="text-indigo-600" href="?{{ query_string }}&page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

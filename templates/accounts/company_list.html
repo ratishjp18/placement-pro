@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-xl font-semibold">Companies</h1>
+  <a href="{% url 'company_create' %}" class="btn">Add company</a>
+</div>
+<table class="data">
+  <tr><th>Company</th><th>Login username</th><th>Contact</th><th>Phone</th></tr>
+  {% for c in object_list %}
+    <tr><td>{{ c.name }}</td><td>{{ c.user.username }}</td><td>{{ c.contact_person }}</td><td>{{ c.phone }}</td></tr>
+  {% empty %}<tr><td colspan="4" class="text-slate-500">No companies yet.</td></tr>{% endfor %}
+</table>
+{% endblock %}

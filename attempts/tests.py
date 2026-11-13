@@ -1,0 +1,85 @@
+import json
+from datetime import timedelta
+
+from django.core.management import call_command
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+
+from accounts.models import User
+from exams.models import Exam
+
+from . import services
+from .models import Attempt
+
+
+class ExamFlowTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command('seed', verbosity=0)
+        cls.exam = Exam.objects.get(title='Sample Aptitude Test')
+        cls.student = User.objects.get(username='student1')
+
+    def setUp(self):
+        self.client.login(username='student1', password='student123')
+
+    def start(self):
+        self.client.post(reverse('exam_intro', args=[self.exam.pk]))
+        return Attempt.objects.get(exam=self.exam, student=self.student)
+
+    def test_one_attempt_and_refresh_restores(self):
+        a = self.start()
+        self.client.post(reverse('exam_intro', args=[self.exam.pk]))
+        self.assertEqual(Attempt.objects.filter(student=self.student).count(), 1)
+        qid = a.question_order[0]
+        self.client.post(reverse('attempt_answer', args=[a.pk]),
+                         json.dumps({'question': qid, 'option': 2}), content_type='application/json')
+        page = self.client.get(reverse('attempt_take', args=[a.pk]))
+        self.assertEqual(page.context['payload']['questions'][0]['selected'], 2)
+
+    def test_page_never_contains_correct_answer(self):
+        a = self.start()
+        html = self.client.get(reverse('attempt_take', args=[a.pk])).content.decode()
+        self.assertNotIn('correct_option', html)
+
+    def test_scoring_with_negative_marking(self):
+        a = self.start()
+        from questions.models import Question
+        qs = Question.objects.in_bulk(a.question_order)
+        first, second = a.question_order[0], a.question_order[1]
+        for qid, right in ((first, True), (second, False)):
+            q = qs[qid]
+            letters = a.option_orders[str(qid)]
+            want = q.correct_option if right else next(l for l in 'ABCD' if l != q.correct_option)
+            self.client.post(reverse('attempt_answer', args=[a.pk]),
+                             json.dumps({'question': qid, 'option': letters.index(want)}),
+                             content_type='application/json')
+        self.client.post(reverse('attempt_submit', args=[a.pk]))
+        a.refresh_from_db()
+        self.assertEqual(float(a.score), 1 - 0.25)
+        self.assertEqual(a.rank, 1)
+
+    def test_server_rejects_answers_after_deadline(self):
+        a = self.start()
+        Attempt.objects.filter(pk=a.pk).update(deadline=timezone.now() - timedelta(seconds=1))
+        r = self.client.post(reverse('attempt_answer', args=[a.pk]),
+                             json.dumps({'question': a.question_order[0], 'option': 0}),
+                             content_type='application/json')
+        self.assertFalse(r.json()['ok'])
+        a.refresh_from_db()
+        self.assertEqual(a.submit_reason, 'timeout')
+
+    def test_three_violations_auto_submit(self):
+        a = self.start()
+        for _ in range(3):
+            self.client.post(reverse('attempt_violation', args=[a.pk]),
+                             json.dumps({'type': 'tab_switch'}), content_type='application/json')
+        a.refresh_from_db()
+        self.assertTrue(a.is_submitted)
+        self.assertEqual(a.submit_reason, 'violations')
+
+    def test_roles_are_enforced(self):
+        self.assertEqual(self.client.get(reverse('exam_list')).status_code, 403)
+        self.client.login(username='acme', password='company123')
+        self.assertEqual(self.client.get(reverse('exam_results', args=[self.exam.pk])).status_code, 200)
+        self.assertEqual(self.client.get(reverse('question_list')).status_code, 403)
