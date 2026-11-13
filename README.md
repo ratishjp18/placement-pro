@@ -67,7 +67,7 @@ Django then serves the built React app and the API together at http://127.0.0.1:
 
 ## Typical flow
 
-1. Company signs in, adds questions (or imports a CSV), then creates an exam: duration, negative marking, start/end window, and how many random questions per section. Keep **Published** ticked so students can see it.
+1. Company signs in, adds questions (or imports a CSV), then creates an exam: duration, start/end window, and how many random questions per section. Keep **Published** ticked so students can see it.
 2. A student logs in, reads the instructions, starts the exam and answers using the numbered palette.
 3. Company opens **Results** for the ranking and exports CSV.
 
@@ -100,7 +100,7 @@ Limits: browser-based proctoring can deter, not prevent, cheating (e.g. a second
 
 ## Scoring and rank
 
-Correct = + question marks; wrong = - marks x negative-marking fraction (e.g. 0.25); unanswered = 0.
+Correct = + the question's marks; wrong or unanswered = 0 (there is no negative marking).
 Rank is by total score, ties broken by earlier submission time.
 
 ## Tests

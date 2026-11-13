@@ -27,12 +27,10 @@ export default function Intro() {
     }
   }
 
-  const negative = Number(exam.negative_marking) > 0
   const tiles = [
     ['clock', 'Duration', `${exam.duration_minutes} min`, 'bg-indigo-50 text-indigo-600'],
     ['list', 'Questions', exam.question_count, 'bg-violet-50 text-violet-600'],
     ['award', 'Total marks', exam.total_marks, 'bg-emerald-50 text-emerald-600'],
-    ['minus', 'Negative marking', negative ? `${exam.negative_marking}× per wrong` : 'None', 'bg-rose-50 text-rose-600'],
   ]
   const rules = [
     ['check', <>You get <strong>one attempt</strong>. The timer runs on the server and keeps going even if you refresh or close the page.</>],
@@ -53,7 +51,7 @@ export default function Intro() {
         </div>
 
         <div className="p-8">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
+          <div className="grid grid-cols-3 gap-3 mb-7">
             {tiles.map(([ic, label, value, tone]) => (
               <div key={label} className="rounded-2xl border border-slate-200 p-3.5">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2.5 ${tone}`}><Icon name={ic} size={18} /></div>

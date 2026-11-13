@@ -148,7 +148,6 @@ def finalize(attempt, reason):
         if attempt.is_submitted:
             return attempt
         exam = attempt.exam
-        penalty = exam.negative_marking
         questions = Question.objects.in_bulk(attempt.question_order)
         answers = {a.question_id: a.selected_option for a in attempt.answers.all()}
 
@@ -162,8 +161,7 @@ def finalize(attempt, reason):
                 st['correct'] += 1
                 st['score'] += q.marks
             else:
-                st['wrong'] += 1
-                st['score'] -= q.marks * penalty
+                st['wrong'] += 1  # no negative marking
 
         SectionScore.objects.filter(attempt=attempt).delete()
         SectionScore.objects.bulk_create(

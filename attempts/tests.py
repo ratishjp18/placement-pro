@@ -60,7 +60,7 @@ class ExamFlowTests(ApiTestCase):
             self.assertEqual(set(q), allowed)   # no correct_option, no hints
         self.assertNotIn('correct_option', json.dumps(data))
 
-    def test_scoring_with_negative_marking(self):
+    def test_scoring_has_no_negative_marking(self):
         a = self.start()
         qs = Question.objects.in_bulk(a.question_order)
         for qid, right in ((a.question_order[0], True), (a.question_order[1], False)):
@@ -70,8 +70,11 @@ class ExamFlowTests(ApiTestCase):
                       {'question': qid, 'option': a.option_orders[str(qid)].index(want)})
         self.post(f'/api/attempts/{a.pk}/submit/')
         result = self.client.get(f'/api/attempts/{a.pk}/result/').json()
-        self.assertEqual(float(result['score']), 1 - 0.25)
-        self.assertEqual(result['rank'], 1)
+        self.assertEqual((result['attended'], result['total']), (2, 30))
+        a.refresh_from_db()
+        self.assertEqual(float(a.score), 1.0)   # 1 correct = +1; the wrong answer costs nothing
+        # nothing that reveals right/wrong, rank, violations or sections
+        self.assertEqual(set(result), {'finished', 'title', 'attended', 'total'})
 
     def test_server_rejects_answers_after_deadline(self):
         a = self.start()
@@ -127,7 +130,7 @@ class CompanyAndAuthTests(ApiTestCase):
             'is_active': True})
         self.assertEqual(r.status_code, 201, r.content)
         r = self.post('/api/company/exams/', {
-            'title': 'Round 2', 'duration_minutes': 20, 'negative_marking': '0.25',
+            'title': 'Round 2', 'duration_minutes': 20,
             'start_time': '2030-01-01T10:00', 'end_time': '2030-01-01T12:00', 'is_published': True,
             'count_quant': 2, 'count_logical': 0, 'count_verbal': 0, 'count_technical': 0})
         self.assertEqual(r.status_code, 201, r.content)

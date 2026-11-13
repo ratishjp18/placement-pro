@@ -24,7 +24,6 @@ def exam_dict(exam, detail=False):
         'title': exam.title,
         'company': exam.company.name,
         'duration_minutes': exam.duration_minutes,
-        'negative_marking': str(exam.negative_marking),
         'start_time': exam.start_time.isoformat(),
         'end_time': exam.end_time.isoformat(),
         'is_published': exam.is_published,

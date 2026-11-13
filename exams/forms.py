@@ -13,7 +13,7 @@ class ExamForm(forms.ModelForm):
 
     class Meta:
         model = Exam
-        fields = ['title', 'duration_minutes', 'negative_marking',
+        fields = ['title', 'duration_minutes',
                   'start_time', 'end_time', 'is_published']
         widgets = {
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),

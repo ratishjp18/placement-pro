@@ -10,9 +10,6 @@ class Exam(models.Model):
     title = models.CharField(max_length=200)
     company = models.ForeignKey('accounts.Company', on_delete=models.CASCADE, related_name='exams')
     duration_minutes = models.PositiveIntegerField(default=60)
-    negative_marking = models.DecimalField(
-        max_digits=4, decimal_places=2, default=0,
-        help_text='Fraction of a question\'s marks deducted for a wrong answer (e.g. 0.25). 0 = off.')
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     is_published = models.BooleanField(default=False)
