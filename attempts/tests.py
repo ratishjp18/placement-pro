@@ -94,10 +94,8 @@ class ExamFlowTests(TestCase):
     def test_signup_flows(self):
         self.client.logout()
         r = self.client.post(reverse('student_signup'), {
-            'username': 'newbie', 'password1': 'Str0ngPass!9', 'password2': 'Str0ngPass!9'})
-        self.assertRedirects(r, reverse('home'), fetch_redirect_response=False)
-        self.assertEqual(User.objects.get(username='newbie').role, 'student')
-        self.client.logout()
-        r = self.client.post(reverse('company_signup'), {
-            'username': 'newco', 'name': 'New Co', 'password1': 'Str0ngPass!9', 'password2': 'Str0ngPass!9'})
-        self.assertTrue(Company.objects.filter(name='New Co').exists())
+            'email': 'newbie@example.com', 'password': 'Str0ngPass!9'})
+        self.assertRedirects(r, reverse('login'), fetch_redirect_response=False)
+        self.assertNotIn('_auth_user_id', self.client.session)
+        self.assertEqual(User.objects.get(email='newbie@example.com').role, 'student')
+        self.assertEqual(self.client.get('/signup/company/').status_code, 404)

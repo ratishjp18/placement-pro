@@ -1,40 +1,31 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.db import transaction
+from django.contrib.auth.password_validation import validate_password
 
-from .models import Company, User
-
-
-class StudentSignupForm(UserCreationForm):
-    class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'roll_number']
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.role = User.Role.STUDENT
-        user.save()
-        return user
+from .models import User
 
 
-class CompanySignupForm(UserCreationForm):
-    name = forms.CharField(max_length=150, label='Company name')
-    contact_person = forms.CharField(max_length=100, required=False)
-    phone = forms.CharField(max_length=30, required=False)
-    website = forms.URLField(required=False)
+class StudentSignupForm(forms.ModelForm):
+    email = forms.EmailField()
+    password = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
         model = User
-        fields = ['username', 'email']
+        fields = ['email']
 
-    @transaction.atomic
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if User.objects.filter(email__iexact=email).exists() or User.objects.filter(username__iexact=email).exists():
+            raise forms.ValidationError('An account with this email already exists.')
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data['password']
+        validate_password(password)
+        return password
+
     def save(self, commit=True):
-        user = super().save(commit=False)
-        user.role = User.Role.COMPANY
-        user.first_name = self.cleaned_data['name'][:150]
+        user = User(username=self.cleaned_data['email'], email=self.cleaned_data['email'],
+                    role=User.Role.STUDENT)
+        user.set_password(self.cleaned_data['password'])
         user.save()
-        Company.objects.create(
-            user=user, name=self.cleaned_data['name'],
-            contact_person=self.cleaned_data['contact_person'],
-            phone=self.cleaned_data['phone'], website=self.cleaned_data['website'])
         return user

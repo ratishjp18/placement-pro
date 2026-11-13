@@ -137,3 +137,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Exam rules
 MAX_VIOLATIONS = 3
+
+AUTHENTICATION_BACKENDS = ['accounts.backends.EmailBackend']

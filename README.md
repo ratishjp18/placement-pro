@@ -6,10 +6,16 @@ Online aptitude exam portal for campus placement drives. A **company** sets up a
 
 | Role | Can do |
 |------|--------|
-| **Company** | Registers itself, builds its own question bank (manual or CSV import), creates exams, sees ranked section-wise results of its own exams and exports them to CSV. Cannot see other companies' data |
-| **Student** | Registers, sees upcoming / active / completed exams, takes them, sees score, section breakdown and rank |
+| **Company** | Logs in with an account created for it (see below), builds its own question bank (manual or CSV import), creates exams, sees ranked section-wise results of its own exams and exports them to CSV. Cannot see other companies' data |
+| **Student** | Signs up on the login page, sees upcoming / active / completed exams, takes them, sees score, section breakdown and rank |
 
-There is no placement-officer role. Both roles sign up themselves from the login page.
+There is no placement-officer role. The login page is student-facing (login or sign up). Company accounts are not self-service; create one with:
+
+```bash
+python manage.py create_company <username> <email> <password>  # log in with the email --name "Company Name"
+```
+
+Companies then sign in on the same login page.
 
 ## Setup
 
@@ -27,14 +33,14 @@ Open http://127.0.0.1:8000/
 
 **Demo logins (from `seed`)**
 
-- Company: `acme` / `company123`
-- Students: `student1` ... `student5` / `student123`
+- Company: `acme@example.com` / `company123`
+- Students: `student1@example.com` ... `student5@example.com` / `student123`
 
 `seed` creates 1 company, 5 students, 40 questions (10 per section, owned by the company) and a "Sample Aptitude Test" open for a week. Safe to re-run. Change the passwords before any real use.
 
 ## Typical flow
 
-1. Company signs in, adds questions (or imports a CSV), then creates an exam: duration, negative marking, start/end window, and how many random questions per section. Tick **Is published** so students can see it.
+1. Company signs in with the account you created for it, adds questions (or imports a CSV), then creates an exam: duration, negative marking, start/end window, and how many random questions per section. Tick **Is published** so students can see it.
 2. Students sign in, open the exam while the window is active, and take it.
 3. Company opens **Results** for the ranking and exports CSV.
 

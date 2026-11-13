@@ -1,10 +1,10 @@
-from django.contrib.auth import login
+from django.contrib import messages
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
 from django.views import View
 from django.views.generic import CreateView
 
-from .forms import CompanySignupForm, StudentSignupForm
+from .forms import StudentSignupForm
 
 
 class HomeView(View):
@@ -36,16 +36,11 @@ class SignupView(CreateView):
         return ctx
 
     def form_valid(self, form):
-        user = form.save()
-        login(self.request, user)
-        return redirect('home')
+        form.save()
+        messages.success(self.request, 'Account created successfully. Please log in.')
+        return redirect('login')
 
 
 class StudentSignupView(SignupView):
     form_class = StudentSignupForm
     role_label = 'Student'
-
-
-class CompanySignupView(SignupView):
-    form_class = CompanySignupForm
-    role_label = 'Company'

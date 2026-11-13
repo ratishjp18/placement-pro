@@ -64,7 +64,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         company_user, _ = User.objects.get_or_create(
-            username='acme', defaults={'role': 'company', 'first_name': 'Acme Corp'})
+            username='acme', defaults={'role': 'company', 'first_name': 'Acme Corp', 'email': 'acme@example.com'})
         company_user.set_password('company123')
         company_user.save()
         company, _ = Company.objects.get_or_create(
@@ -102,4 +102,4 @@ class Command(BaseCommand):
                 self.stderr.write(f'Could not create sample exam: {form.errors.as_json()}')
 
         self.stdout.write(self.style.SUCCESS(f'Seeded ({created} new questions).'))
-        self.stdout.write('Logins -> acme/company123 (company), student1..5/student123 (students)')
+        self.stdout.write('Logins -> acme@example.com / company123 (company), student1@example.com .. student5@example.com / student123 (students)')
