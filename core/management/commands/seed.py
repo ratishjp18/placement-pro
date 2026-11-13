@@ -90,7 +90,6 @@ class Command(BaseCommand):
             now = timezone.now()
             form = ExamForm(company=company, data={
                 'title': 'Sample Aptitude Test', 'duration_minutes': 30,
-                'negative_marking': '0.25',
                 'start_time': (now - timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M'),
                 'end_time': (now + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M'),
                 'is_published': 'on',

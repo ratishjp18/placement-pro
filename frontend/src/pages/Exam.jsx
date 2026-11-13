@@ -245,7 +245,6 @@ export default function Exam() {
             <div><span className="pal marked inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Marked for review ({count.marked})</div>
             <div><span className="pal inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Not visited ({count.fresh})</div>
           </div>
-          <button className="btn w-full" onClick={() => setReviewing(true)}>Review &amp; submit</button>
         </aside>
       </div>
 
