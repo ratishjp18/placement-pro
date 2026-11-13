@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'exams',
     'attempts',
     'core',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -65,7 +66,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -132,10 +133,14 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
 
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = []
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Exam rules
 MAX_VIOLATIONS = 3
 
 AUTHENTICATION_BACKENDS = ['accounts.backends.EmailBackend']
+
+# React dev server (Vite) talks to Django through a proxy on these origins.
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5180', 'http://127.0.0.1:5180']
+FRONTEND_DIST = BASE_DIR / 'frontend' / 'dist'
