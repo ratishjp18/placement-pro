@@ -12,6 +12,7 @@ urlpatterns = [
     path('student/exams/<int:pk>/', v.student_intro),
     path('student/exams/<int:pk>/start/', v.student_start),
     path('attempts/<int:pk>/', v.attempt_detail),
+    path('attempts/<int:pk>/begin/', v.attempt_begin),
     path('attempts/<int:pk>/answer/', v.attempt_answer),
     path('attempts/<int:pk>/violation/', v.attempt_violation),
     path('attempts/<int:pk>/submit/', v.attempt_submit),

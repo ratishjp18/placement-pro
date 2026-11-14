@@ -34,6 +34,13 @@ class ExamFlowTests(ApiTestCase):
     def start(self):
         r = self.post(f'/api/student/exams/{self.exam.pk}/start/')
         self.assertEqual(r.status_code, 200)
+        a = Attempt.objects.get(pk=r.json()['attempt_id'])
+        self.post(f'/api/attempts/{a.pk}/begin/')  # camera on: the clock starts here
+        a.refresh_from_db()
+        return a
+
+    def start_only(self):
+        r = self.post(f'/api/student/exams/{self.exam.pk}/start/')
         return Attempt.objects.get(pk=r.json()['attempt_id'])
 
     def test_login_flow_goes_intro_exam_result(self):
@@ -91,6 +98,36 @@ class ExamFlowTests(ApiTestCase):
         self.assertTrue(r.json()['finished'])
         a.refresh_from_db()
         self.assertEqual(a.submit_reason, 'violations')
+
+    def test_camera_violations_are_logged_and_counted(self):
+        a = self.start()
+        for kind in ('no_face', 'multiple_faces'):
+            r = self.post(f'/api/attempts/{a.pk}/violation/', {'type': kind})
+            self.assertFalse(r.json()['finished'])
+        r = self.post(f'/api/attempts/{a.pk}/violation/', {'type': 'camera_off'})
+        self.assertTrue(r.json()['finished'])
+        self.assertEqual(a.violations.count(), 3)
+
+    def test_clock_and_questions_wait_for_begin(self):
+        a = self.start_only()
+        self.assertIsNone(a.deadline)
+        d = self.client.get(f'/api/attempts/{a.pk}/').json()
+        self.assertFalse(d['started'])
+        self.assertEqual(d['questions'], [])
+        self.assertEqual(d['remaining'], self.exam.duration_minutes * 60)
+        # nothing counts before the camera step is done
+        self.post(f'/api/attempts/{a.pk}/violation/', {'type': 'no_face'})
+        a.refresh_from_db()
+        self.assertEqual(a.violation_count, 0)
+        r = self.post(f'/api/attempts/{a.pk}/begin/').json()
+        self.assertTrue(r['started'])
+        self.assertEqual(len(r['questions']), self.exam.exam_questions.count())
+        a.refresh_from_db()
+        first = a.deadline
+        self.assertIsNotNone(first)
+        self.post(f'/api/attempts/{a.pk}/begin/')  # calling again must not restart the clock
+        a.refresh_from_db()
+        self.assertEqual(a.deadline, first)
 
     def test_student_cannot_use_company_api(self):
         self.assertEqual(self.client.get('/api/company/exams/').status_code, 403)

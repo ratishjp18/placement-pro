@@ -131,6 +131,17 @@ def attempt_detail(request, pk):
 
 
 @endpoint('POST', role='student')
+def attempt_begin(request, pk):
+    """The student has the camera on and enters the test: this is when the clock starts."""
+    attempt = services.begin_attempt(_own_attempt(request, pk))
+    if attempt.is_submitted:
+        return JsonResponse({'finished': True})
+    payload = services.build_payload(attempt)
+    payload['title'] = attempt.exam.title
+    return JsonResponse(payload)
+
+
+@endpoint('POST', role='student')
 def attempt_answer(request, pk):
     attempt = _own_attempt(request, pk)
     data = read_json(request)

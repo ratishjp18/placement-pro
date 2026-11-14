@@ -54,19 +54,33 @@ def start_attempt(exam, student):
         random.shuffle(letters)
         option_orders[str(qid)] = letters
 
-    deadline = min(now + timedelta(minutes=exam.duration_minutes), exam.end_time)
     try:
         with transaction.atomic():
             return Attempt.objects.create(
-                exam=exam, student=student, started_at=now, deadline=deadline,
+                exam=exam, student=student, started_at=now,  # the clock starts later, in begin_attempt()
                 question_order=order, option_orders=option_orders)
     except IntegrityError:  # double click / two tabs
         return get_attempt(exam, student)
 
 
+def begin_attempt(attempt):
+    """Start the clock (once). Called when the student has the camera on and enters the test."""
+    attempt = ensure_current(attempt)
+    if attempt.is_submitted or attempt.has_begun:
+        return attempt
+    now = timezone.now()
+    deadline = min(now + timedelta(minutes=attempt.exam.duration_minutes), attempt.exam.end_time)
+    Attempt.objects.filter(pk=attempt.pk, deadline__isnull=True).update(started_at=now, deadline=deadline)
+    attempt.refresh_from_db()
+    return attempt
+
+
 # ---------- payload for the browser (never contains correct answers) ----------
 
 def build_payload(attempt):
+    if not attempt.has_begun:  # questions stay hidden until the clock starts
+        return {'started': False, 'questions': [], 'remaining': attempt.remaining_seconds(),
+                'violations': attempt.violation_count, 'max_violations': settings.MAX_VIOLATIONS}
     qs = Question.objects.in_bulk(attempt.question_order)
     answers = {a.question_id: a for a in attempt.answers.all()}
     items = []
@@ -87,6 +101,7 @@ def build_payload(attempt):
             'selected': selected,
         })
     return {
+        'started': True,
         'questions': items,
         'remaining': attempt.remaining_seconds(),
         'violations': attempt.violation_count,
@@ -99,7 +114,7 @@ def build_payload(attempt):
 def save_answer(attempt, question_id, position):
     """Store an answer. Returns False if the attempt is over (it is finalized first if time is up)."""
     attempt = ensure_current(attempt)
-    if attempt.is_submitted:
+    if attempt.is_submitted or not attempt.has_begun:
         return False
     letters = attempt.option_orders.get(str(question_id))
     if letters is None:
@@ -121,7 +136,7 @@ def record_violation(attempt, kind):
     if kind not in ViolationLog.Kind.values:
         raise ValueError('Bad violation type.')
     attempt = ensure_current(attempt)
-    if attempt.is_submitted:
+    if attempt.is_submitted or not attempt.has_begun:
         return attempt
     ViolationLog.objects.create(attempt=attempt, kind=kind)
     Attempt.objects.filter(pk=attempt.pk).update(violation_count=F('violation_count') + 1)
@@ -135,7 +150,11 @@ def record_violation(attempt, kind):
 
 def ensure_current(attempt):
     """Finalize the attempt if its server-side deadline has passed."""
-    if not attempt.is_submitted and timezone.now() >= attempt.deadline:
+    if attempt.is_submitted:
+        return attempt
+    now = timezone.now()
+    over = now >= attempt.deadline if attempt.has_begun else now >= attempt.exam.end_time
+    if over:
         return finalize(attempt, Attempt.Reason.TIMEOUT)
     return attempt
 
@@ -172,7 +191,7 @@ def finalize(attempt, reason):
         attempt.score = sum((v['score'] for v in stats.values()), Decimal(0)).quantize(MONEY)
         attempt.status = Attempt.Status.SUBMITTED
         attempt.submit_reason = reason
-        attempt.submitted_at = min(timezone.now(), attempt.deadline)
+        attempt.submitted_at = min(timezone.now(), attempt.deadline) if attempt.has_begun else timezone.now()
         attempt.save()
         recompute_ranks(exam)
         attempt.refresh_from_db()
@@ -190,7 +209,10 @@ def recompute_ranks(exam):
 def finalize_expired():
     """Close every in-progress attempt whose deadline has passed. Returns the number closed."""
     count = 0
-    for a in Attempt.objects.filter(status=Attempt.Status.IN_PROGRESS, deadline__lte=timezone.now()):
-        finalize(a, Attempt.Reason.TIMEOUT)
-        count += 1
+    now = timezone.now()
+    open_attempts = Attempt.objects.filter(status=Attempt.Status.IN_PROGRESS).select_related('exam')
+    for a in open_attempts:
+        if (a.has_begun and a.deadline <= now) or (not a.has_begun and a.exam.end_time <= now):
+            finalize(a, Attempt.Reason.TIMEOUT)
+            count += 1
     return count
