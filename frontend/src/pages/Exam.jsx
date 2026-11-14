@@ -29,15 +29,21 @@ export default function Exam() {
   const lastEvent = useRef(0)
   const chain = useRef(Promise.resolve())
 
+  // Shows a payload from the server. Before the test begins it has no questions and the clock is not running.
+  const applyPayload = (d) => {
+    endAt.current = performance.now() + d.remaining * 1000
+    setLeft(d.remaining)
+    setViolations(d.violations)
+    setAnswers(d.questions.map((q) => ({ selected: q.selected, visited: q.selected !== null })))
+    setData(d)
+  }
+
   // ---- load (a refresh restores answers and the remaining time from the server) ----
   useEffect(() => {
     api(`/attempts/${id}/`)
       .then((d) => {
         if (d.finished) { navigate(`/attempt/${id}/result`, { replace: true }); return }
-        endAt.current = performance.now() + d.remaining * 1000
-        setViolations(d.violations)
-        setAnswers(d.questions.map((q) => ({ selected: q.selected, visited: q.selected !== null })))
-        setData(d)
+        applyPayload(d)
       })
       .catch(() => navigate('/', { replace: true }))
   }, [id, navigate])
@@ -95,7 +101,7 @@ export default function Exam() {
   const submitRef = useRef(submit)
   submitRef.current = submit
   useEffect(() => {
-    if (!data) return
+    if (!data || !data.started) return
     const t = setInterval(() => {
       const s = Math.max(0, Math.ceil((endAt.current - performance.now()) / 1000))
       setLeft(s)
@@ -149,6 +155,16 @@ export default function Exam() {
     try {
       if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen()
     } catch { /* some browsers refuse; the exam still continues */ }
+    if (!data.started) {
+      // Camera is on and a face is visible: the server starts the clock and releases the questions now.
+      const resp = await post('begin', {})
+      if (!resp) {
+        setWarn('Could not start the test. Check your connection and try again.')
+        return
+      }
+      if (resp.finished) { goToResult(); return }
+      applyPayload(resp)
+    }
     active.current = true
     setGate(false)
   }
@@ -220,7 +236,7 @@ export default function Exam() {
         {warn && <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm font-medium">⚠ {warn}</div>}
 
         {/* numbered strip: jump to any question */}
-        <div className={`card p-3 mb-3 ${reviewing ? 'hidden' : ''}`}>
+        <div className={`card p-3 mb-3 ${reviewing || !data.started ? 'hidden' : ''}`}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <span className="text-sm font-bold">Questions</span>
             <div className="flex items-center gap-4 text-xs text-stone-500">
@@ -232,7 +248,11 @@ export default function Exam() {
           <div className="flex flex-wrap gap-1.5">{palette}</div>
         </div>
 
-        {reviewing ? (
+        {!data.started ? (
+          <section className="card p-8 text-center text-stone-500">
+            Your questions appear and the timer starts when you continue from the camera check.
+          </section>
+        ) : reviewing ? (
           <section className="card p-5">
             <h2 className="text-lg font-extrabold mb-0.5">Review your answers</h2>
             <p className="text-sm text-stone-500 mb-3">

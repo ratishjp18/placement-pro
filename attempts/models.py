@@ -19,7 +19,7 @@ class Attempt(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='attempts')
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attempts')
     started_at = models.DateTimeField(default=timezone.now)
-    deadline = models.DateTimeField()
+    deadline = models.DateTimeField(null=True, blank=True)  # null until the student begins (camera on)
     submitted_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.IN_PROGRESS)
     submit_reason = models.CharField(max_length=12, choices=Reason.choices, blank=True)
@@ -38,7 +38,13 @@ class Attempt(models.Model):
         return self.status == self.Status.SUBMITTED
 
     def remaining_seconds(self):
+        if self.deadline is None:  # not begun: the full time is still waiting
+            return self.exam.duration_minutes * 60
         return max(0, int((self.deadline - timezone.now()).total_seconds()))
+
+    @property
+    def has_begun(self):
+        return self.deadline is not None
 
 
 class Answer(models.Model):
