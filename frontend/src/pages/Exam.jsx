@@ -12,7 +12,7 @@ export default function Exam() {
   const navigate = useNavigate()
 
   const [data, setData] = useState(null)
-  const [answers, setAnswers] = useState([]) // { selected, marked, visited } per question
+  const [answers, setAnswers] = useState([]) // { selected, visited } per question
   const [idx, setIdx] = useState(0)
   const [left, setLeft] = useState(null)
   const [violations, setViolations] = useState(0)
@@ -35,7 +35,7 @@ export default function Exam() {
         if (d.finished) { navigate(`/attempt/${id}/result`, { replace: true }); return }
         endAt.current = performance.now() + d.remaining * 1000
         setViolations(d.violations)
-        setAnswers(d.questions.map((q) => ({ selected: q.selected, marked: q.marked, visited: q.selected !== null || q.marked })))
+        setAnswers(d.questions.map((q) => ({ selected: q.selected, visited: q.selected !== null })))
         setData(d)
       })
       .catch(() => navigate('/', { replace: true }))
@@ -103,14 +103,25 @@ export default function Exam() {
         setGate(true)
       }
     }
-    const noMenu = (e) => e.preventDefault()
+    // Copy protection: no selecting, copying, cutting, pasting, dragging, right-click menu or save/print shortcuts.
+    const block = (e) => e.preventDefault()
+    const BLOCKED_EVENTS = ['contextmenu', 'copy', 'cut', 'paste', 'selectstart', 'dragstart']
+    const onKey = (e) => {
+      const k = e.key.toLowerCase()
+      if ((e.ctrlKey || e.metaKey) && ['c', 'x', 'v', 'a', 'p', 's', 'u'].includes(k)) e.preventDefault()
+      if (e.key === 'PrintScreen') navigator.clipboard?.writeText('').catch(() => {}) // wipe a screenshot from the clipboard
+    }
     document.addEventListener('visibilitychange', onVisibility)
     document.addEventListener('fullscreenchange', onFullscreen)
-    document.addEventListener('contextmenu', noMenu)
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('keyup', onKey)
+    BLOCKED_EVENTS.forEach((ev) => document.addEventListener(ev, block))
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       document.removeEventListener('fullscreenchange', onFullscreen)
-      document.removeEventListener('contextmenu', noMenu)
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('keyup', onKey)
+      BLOCKED_EVENTS.forEach((ev) => document.removeEventListener(ev, block))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
@@ -136,15 +147,14 @@ export default function Exam() {
   const update = (patch) => {
     const next = { ...cur, ...patch }
     setAnswers((a) => a.map((x, i) => (i === idx ? next : x)))
-    post('answer', { question: q.id, option: next.selected, marked: next.marked }).then(handle)
+    post('answer', { question: q.id, option: next.selected }).then(handle)
   }
   const go = (i) => { setReviewing(false); setIdx(Math.max(0, Math.min(qs.length - 1, i))) }
   const isLast = idx === qs.length - 1
   const next = () => (isLast ? setReviewing(true) : go(idx + 1))
 
-  const count = { answered: 0, visited: 0, marked: 0, fresh: 0 }
+  const count = { answered: 0, visited: 0, fresh: 0 }
   const status = (s) => {
-    if (s.marked) { count.marked++; return 'marked' }
     if (s.selected !== null) { count.answered++; return 'answered' }
     if (s.visited) { count.visited++; return 'visited' }
     count.fresh++
@@ -159,7 +169,7 @@ export default function Exam() {
   const unanswered = answers.filter((s) => s.selected === null).length
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6 no-copy">
       <div className="card px-5 py-3 mb-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
@@ -188,7 +198,7 @@ export default function Exam() {
           <section className="card p-5">
             <h2 className="text-xl font-extrabold mb-1">Review your answers</h2>
             <p className="text-sm text-slate-500 mb-4">
-              {answers.length - unanswered} answered · {unanswered} not answered · {count.marked} marked for review.
+              {answers.length - unanswered} answered · {unanswered} not answered.
               Click a question to change its answer.
             </p>
             <div className="divide-y border rounded-lg mb-5">
@@ -198,7 +208,6 @@ export default function Exam() {
                   <button key={question.id} onClick={() => go(i)} className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-indigo-50">
                     <span className="w-7 h-7 shrink-0 rounded-md bg-slate-100 text-xs font-semibold flex items-center justify-center">{i + 1}</span>
                     <span className="flex-1 text-sm truncate">{question.text}</span>
-                    {a.marked && <span className="badge badge-upcoming">Review</span>}
                     {a.selected !== null
                       ? <span className="badge badge-active">{String.fromCharCode(65 + a.selected)}. {question.options[a.selected].slice(0, 24)}</span>
                       : <span className="badge badge-draft">Not answered</span>}
@@ -228,9 +237,6 @@ export default function Exam() {
           <div className="flex flex-wrap gap-2">
             <button className="btn btn-secondary" disabled={idx === 0} onClick={() => go(idx - 1)}>Previous</button>
             <button className="btn btn-secondary" onClick={() => update({ selected: null })}>Clear answer</button>
-            <button className="btn btn-secondary" onClick={() => { update({ marked: !cur.marked }); next() }}>
-              {cur.marked ? 'Unmark review' : 'Mark for review'} &amp; {isLast ? 'review' : 'next'}
-            </button>
             <button className="btn" onClick={next}>{isLast ? 'Review answers' : 'Save & next'}</button>
           </div>
         </section>
@@ -242,7 +248,6 @@ export default function Exam() {
           <div className="text-xs text-slate-500 space-y-1 mb-4">
             <div><span className="pal answered inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Answered ({count.answered})</div>
             <div><span className="pal visited inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Not answered ({count.visited})</div>
-            <div><span className="pal marked inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Marked for review ({count.marked})</div>
             <div><span className="pal inline-block align-middle" style={{ width: '.9rem', height: '.9rem' }} /> Not visited ({count.fresh})</div>
           </div>
         </aside>
@@ -267,7 +272,7 @@ export default function Exam() {
           <div className="bg-white rounded-2xl p-7 max-w-sm shadow-2xl">
             <h2 className="text-lg font-extrabold mb-2">Submit test?</h2>
             <p className="text-sm text-slate-600 mb-4">
-              {unanswered} question(s) unanswered, {count.marked} marked for review. You cannot change answers after submitting.
+              {unanswered} question(s) unanswered. You cannot change answers after submitting.
             </p>
             <div className="flex gap-2 justify-end">
               <button className="btn btn-secondary" onClick={() => setConfirming(false)}>Go back</button>

@@ -84,7 +84,6 @@ table.data tbody tr:hover td { background: #fafbff; }
 .pal:hover { transform: translateY(-1px); }
 .pal.visited { background: #ffe4e6; border-color: #fda4af; color: #be123c; }
 .pal.answered { background: #d1fae5; border-color: #6ee7b7; color: #047857; }
-.pal.marked { background: #ede9fe; border-color: #c4b5fd; color: #6d28d9; }
 .pal.current { outline: 2.5px solid var(--brand); outline-offset: 2px; }
 
 .opt { display: flex; align-items: center; gap: .9rem; width: 100%; text-align: left; padding: .85rem 1rem; border: 1.5px solid #dfe3ee;
@@ -94,3 +93,8 @@ table.data tbody tr:hover td { background: #fafbff; }
   display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s, color .15s; }
 .opt.sel { border-color: var(--brand); background: #eef2ff; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
 .opt.sel .opt-letter { background: var(--brand); color: #fff; }
+
+/* ---------- exam copy protection ---------- */
+.no-copy, .no-copy * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.no-copy img { -webkit-user-drag: none; }
+@media print { .no-copy { display: none !important; } }

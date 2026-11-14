@@ -137,7 +137,7 @@ def attempt_answer(request, pk):
     if data is None:
         return bad_request()
     try:
-        ok = services.save_answer(attempt, int(data['question']), data.get('option'), data.get('marked', False))
+        ok = services.save_answer(attempt, int(data['question']), data.get('option'))
     except (KeyError, TypeError, ValueError):
         return bad_request()
     attempt.refresh_from_db()

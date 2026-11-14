@@ -45,7 +45,6 @@ class Answer(models.Model):
     attempt = models.ForeignKey(Attempt, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.PROTECT, related_name='+')
     selected_option = models.CharField(max_length=1, blank=True)   # real letter A-D, blank = none
-    marked_for_review = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

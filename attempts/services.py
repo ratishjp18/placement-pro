@@ -85,7 +85,6 @@ def build_payload(attempt):
             'marks': str(q.marks),
             'options': [q.option_text(l) for l in letters],
             'selected': selected,
-            'marked': bool(ans and ans.marked_for_review),
         })
     return {
         'questions': items,
@@ -97,7 +96,7 @@ def build_payload(attempt):
 
 # ---------- saving answers ----------
 
-def save_answer(attempt, question_id, position, marked):
+def save_answer(attempt, question_id, position):
     """Store an answer. Returns False if the attempt is over (it is finalized first if time is up)."""
     attempt = ensure_current(attempt)
     if attempt.is_submitted:
@@ -112,7 +111,7 @@ def save_answer(attempt, question_id, position, marked):
         letter = letters[position]
     Answer.objects.update_or_create(
         attempt=attempt, question_id=question_id,
-        defaults={'selected_option': letter, 'marked_for_review': bool(marked)})
+        defaults={'selected_option': letter})
     return True
 
 

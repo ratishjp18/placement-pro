@@ -55,7 +55,7 @@ class ExamFlowTests(ApiTestCase):
     def test_payload_never_contains_correct_answer(self):
         a = self.start()
         data = self.client.get(f'/api/attempts/{a.pk}/').json()
-        allowed = {'id', 'section', 'section_label', 'text', 'marks', 'options', 'selected', 'marked'}
+        allowed = {'id', 'section', 'section_label', 'text', 'marks', 'options', 'selected'}
         for q in data['questions']:
             self.assertEqual(set(q), allowed)   # no correct_option, no hints
         self.assertNotIn('correct_option', json.dumps(data))

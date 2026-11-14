@@ -34,7 +34,7 @@ export default function Intro() {
   ]
   const rules = [
     ['check', <>You get <strong>one attempt</strong>. The timer runs on the server and keeps going even if you refresh or close the page.</>],
-    ['list', <>Questions appear <strong>one per page</strong>. Use the numbered palette to jump around and mark questions for review.</>],
+    ['list', <>Questions appear <strong>one per page</strong>. Use the numbered palette to jump to any question.</>],
     ['shield', <>The test runs in <strong>fullscreen</strong>. Switching tabs or leaving fullscreen is a violation. After <strong>{exam.max_violations}</strong> the test is submitted automatically.</>],
     ['check', <>Answers save automatically. At the end you will <strong>review all answers</strong> before submitting. The test also submits when time ends.</>],
   ]
