@@ -31,9 +31,9 @@ export default function ImportCSV() {
   return (
     <div className="max-w-2xl mx-auto card p-7">
       <h1 className="page-title mb-3">Import questions from CSV</h1>
-      <p className="text-sm text-slate-600 mb-1">Required columns:</p>
-      <code className="block text-xs bg-slate-100 p-2 rounded mb-2">section, topic, difficulty, marks, text, option_a, option_b, option_c, option_d, correct_option</code>
-      <p className="text-sm text-slate-600 mb-4">
+      <p className="text-sm text-stone-600 mb-1">Required columns:</p>
+      <code className="block text-xs bg-stone-100 p-2 rounded mb-2">section, topic, difficulty, marks, text, option_a, option_b, option_c, option_d, correct_option</code>
+      <p className="text-sm text-stone-600 mb-4">
         Sections: quant, logical, verbal, technical. Difficulty: easy, medium, hard.{' '}
         <a className="link" href="/api/company/questions/sample.csv">Download sample</a>. The import is all-or-nothing: any bad row cancels it.
       </p>

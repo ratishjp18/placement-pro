@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import Logos from './pages/Logos'
 import Register from './pages/Register'
 import StudentHome from './pages/StudentHome'
 import Intro from './pages/Intro'
@@ -39,6 +40,7 @@ function Public({ children }) {
 export default function App() {
   return (
     <Routes>
+      <Route path="/logos" element={<Logos />} />
       <Route path="/login" element={<Public><Login /></Public>} />
       <Route path="/register" element={<Public><Register /></Public>} />
 

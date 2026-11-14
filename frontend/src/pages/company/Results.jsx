@@ -14,7 +14,7 @@ export default function Results() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="page-title">{d.exam.title} — results</h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-stone-500">
             {d.rows.length} submission(s) · total marks {d.exam.total_marks}
             {d.exam.status === 'active' && ' · exam still running, ranks may change'}
           </p>
@@ -31,13 +31,13 @@ export default function Results() {
             </tr>
           </thead>
           <tbody>
-            {d.rows.length === 0 && <tr><td colSpan="9" className="text-slate-500 text-center py-8">No submissions yet.</td></tr>}
+            {d.rows.length === 0 && <tr><td colSpan="9" className="text-stone-500 text-center py-8">No submissions yet.</td></tr>}
             {d.rows.map((r) => (
               <tr key={r.rank}>
                 <td className="font-semibold">{r.rank}</td>
                 <td>{r.roll_number || '—'}</td><td>{r.name}</td><td>{r.email}</td>
                 {r.sections.map((s, i) => (
-                  <td key={i}>{s ? <>{s.score} <span className="text-xs text-slate-400">({s.correct}✓ {s.wrong}✗)</span></> : 0}</td>
+                  <td key={i}>{s ? <>{s.score} <span className="text-xs text-stone-400">({s.correct}✓ {s.wrong}✗)</span></> : 0}</td>
                 ))}
                 <td className="font-semibold">{r.score}</td><td>{r.violations}</td><td className="text-sm">{r.reason}</td>
               </tr>

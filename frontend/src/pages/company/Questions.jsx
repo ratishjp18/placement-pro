@@ -32,7 +32,7 @@ export default function Questions() {
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="page-title">Question bank <span className="text-sm font-normal text-slate-500">({d.count})</span></h1>
+        <h1 className="page-title">Question bank <span className="text-sm font-normal text-stone-500">({d.count})</span></h1>
         <div className="flex gap-2">
           <Link to="/company/questions/import" className="btn btn-secondary">Import CSV</Link>
           <Link to="/company/questions/new" className="btn">Add question</Link>
@@ -54,22 +54,22 @@ export default function Questions() {
       <table className="data">
         <thead><tr><th>Question</th><th>Section</th><th>Topic</th><th>Level</th><th>Marks</th><th>Ans</th><th /></tr></thead>
         <tbody>
-          {d.results.length === 0 && <tr><td colSpan="7" className="text-slate-500 text-center py-8">No questions found.</td></tr>}
+          {d.results.length === 0 && <tr><td colSpan="7" className="text-stone-500 text-center py-8">No questions found.</td></tr>}
           {d.results.map((q) => (
             <tr key={q.id} className={q.is_active ? '' : 'opacity-50'}>
-              <td>{q.text.length > 90 ? q.text.slice(0, 90) + '…' : q.text}</td>
+              <td className="max-w-xs truncate" title={q.text}>{q.text}</td>
               <td>{q.section_label}</td><td>{q.topic}</td><td>{q.difficulty_label}</td><td>{q.marks}</td><td>{q.correct_option}</td>
               <td className="whitespace-nowrap text-sm">
                 {confirmId === q.id ? (
                   <>
-                    <span className="text-slate-500 mr-2">Delete?</span>
+                    <span className="text-stone-500 mr-2">Delete?</span>
                     <button className="text-red-600 font-semibold mr-2" onClick={() => remove(q.id)}>Yes</button>
                     <button className="link" onClick={() => setConfirmId(null)}>No</button>
                   </>
                 ) : (
                   <>
                     <Link className="link" to={`/company/questions/${q.id}/edit`}>Edit</Link>
-                    <span className="text-slate-300 mx-1">|</span>
+                    <span className="text-stone-300 mx-1">|</span>
                     <button className="text-red-600 font-medium hover:underline" onClick={() => setConfirmId(q.id)}>Delete</button>
                   </>
                 )}

@@ -42,7 +42,7 @@ export function Providers({ children }) {
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       <ToastContext.Provider value={toast}>
         {children}
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] space-y-2 w-[min(92vw,28rem)]">
+        <div className="fixed top-4 left-1/2 -transtone-x-1/2 z-[100] space-y-2 w-[min(92vw,28rem)]">
           {toasts.map((t) => (
             <div key={t.id} className={`px-4 py-3 rounded-xl text-sm font-medium border shadow-lg ${colors[t.type]}`}>
               {t.message}

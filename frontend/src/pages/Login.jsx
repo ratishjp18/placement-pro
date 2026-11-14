@@ -1,39 +1,61 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context'
-import { Icon, Logo } from '../components/ui'
+import { Icon, Logo, PasswordInput } from '../components/ui'
 
-export function AuthShell({ children }) {
+const STEPS = [
+  ['Create your account', 'Just an email and a password. It takes under a minute.'],
+  ['Read the instructions', 'See the duration, the number of questions and the rules before you start.'],
+  ['Take the timed test', 'One question at a time. Your answers save automatically as you go.'],
+]
+const INTRO = 'Companies visiting your campus run their aptitude rounds here. Sign in, sit the test, and you are done.'
+const CHIPS = [['clock', 'Live timer'], ['shield', 'Auto-save'], ['check', 'One attempt']]
+
+/* ---------------- Right panel: dark green with glass cards ---------------- */
+function AuthPanel() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10">
-      <div className="auth-bg" />
-      <div className="grid md:grid-cols-[1.05fr_1fr] w-full max-w-4xl rounded-3xl overflow-hidden shadow-2xl shadow-indigo-900/10 border border-white/60 bg-white rise">
-        <div className="hidden md:flex flex-col justify-between p-10 text-white relative overflow-hidden bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700">
-          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10" />
-          <div className="absolute -bottom-32 -left-16 w-80 h-80 rounded-full bg-fuchsia-400/20" />
-          <div className="relative"><Logo size={40} light /></div>
-          <div className="relative">
-            <h2 className="text-[2rem] font-extrabold leading-[1.15] mb-3">Your campus placement test, made simple.</h2>
-            <p className="text-indigo-100 text-sm mb-7 max-w-sm">Take timed aptitude tests from companies visiting your campus and see your rank the moment you finish.</p>
-            <ul className="space-y-3 text-sm">
-              {[['clock', 'Timed tests with a live countdown'], ['shield', 'Auto-saved answers, safe on refresh'], ['award', 'Instant score, sections and rank']].map(([ic, t]) => (
-                <li key={t} className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center"><Icon name={ic} size={16} /></span>{t}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="relative flex gap-2 flex-wrap text-[11px] font-semibold">
-            {['Quantitative', 'Logical', 'Verbal', 'Technical'].map((s) => (
-              <span key={s} className="px-2.5 py-1 rounded-full bg-white/15">{s}</span>
-            ))}
-          </div>
-        </div>
-        <div className="p-8 md:p-11 flex flex-col justify-center">
-          <div className="md:hidden mb-6"><Logo size={36} /></div>
-          {children}
+    <div
+      className="hidden lg:flex lg:h-screen lg:overflow-hidden relative flex-col justify-center text-white px-14 py-8 overflow-hidden"
+      style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.09) 1.2px, transparent 1.2px), linear-gradient(135deg, #0f766e, #115e59 55%, #042f2e)', backgroundSize: '22px 22px, auto' }}
+    >
+      <div className="absolute -bottom-40 -right-40 w-[28rem] h-[28rem] rounded-full bg-amber-400/15 blur-3xl" />
+      <div className="relative max-w-md">
+        <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-3.5 py-1.5 text-xs font-bold text-teal-50">
+          <span className="w-2 h-2 rounded-full bg-amber-400" /> Campus placement tests
+        </span>
+        <h2 className="mt-4 text-[2.4rem] font-extrabold leading-[1.08] tracking-tight">
+          One test.<br /><span className="text-amber-300">A real shot</span><br />at your next job.
+        </h2>
+        <p className="mt-3 text-teal-50/80 text-[15px] leading-relaxed">{INTRO}</p>
+        <ol className="mt-6 space-y-2.5">
+          {STEPS.map(([title, text], i) => (
+            <li key={title} className="flex items-start gap-4 rounded-2xl bg-white/10 border border-white/15 px-5 py-3">
+              <span className="w-8 h-8 shrink-0 rounded-full bg-amber-400 text-stone-900 font-extrabold text-sm flex items-center justify-center">{i + 1}</span>
+              <div><div className="font-bold text-[15px]">{title}</div><div className="text-[13px] text-teal-50/75 mt-0.5">{text}</div></div>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-5 flex gap-6 text-xs font-semibold text-teal-50/90">
+          {CHIPS.map(([ic, t]) => <span key={t} className="inline-flex items-center gap-1.5"><Icon name={ic} size={14} /> {t}</span>)}
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Auth pages: the form on the left, a "how it works" panel on the right.
+ */
+export function AuthShell({ children }) {
+  return (
+    <div className="min-h-screen lg:min-h-0 lg:h-screen grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className="flex flex-col px-4 lg:px-8 pb-5 pt-0 bg-white lg:h-screen lg:min-h-0">
+        <div className="h-16 flex items-center shrink-0"><Logo size={36} /></div>
+        <div className="flex-1 flex items-center lg:min-h-0 lg:overflow-y-auto">
+          <div className="auth-lg w-full max-w-md mx-auto lg:mx-0 lg:ml-[8%] py-6 rise">{children}</div>
+        </div>
+        <p className="text-xs text-stone-400">© PlacementPro · Campus aptitude tests</p>
+      </div>
+      <AuthPanel />
     </div>
   )
 }
@@ -62,23 +84,23 @@ export default function Login() {
 
   return (
     <AuthShell>
-      <h1 className="text-[1.7rem] font-extrabold tracking-tight mb-1">Welcome back</h1>
-      <p className="text-sm text-slate-500 mb-7">Sign in with your email and password.</p>
-      <form onSubmit={submit} className="space-y-4">
-        {error && <p className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3.5 py-2.5">{error}</p>}
+      <h1 className="text-[2.6rem] font-extrabold tracking-tight leading-[1.05] mb-2">Sign in</h1>
+      <p className="text-base text-stone-500 mb-8">Use your email and password to continue.</p>
+      <form onSubmit={submit} className="space-y-5">
+        {error && <p className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3.5 py-2.5">{error}</p>}
         <div className="field">
           <label className="lbl">Email</label>
           <input type="email" required autoFocus placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="field">
           <label className="lbl">Password</label>
-          <input type="password" required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <button className="btn btn-lg w-full" disabled={busy}>{busy ? 'Signing in…' : <>Sign in <Icon name="arrow" size={16} /></>}</button>
+        <button className="btn btn-lg w-full" disabled={busy}>{busy ? 'Signing in…' : <>Continue <Icon name="arrow" size={16} /></>}</button>
       </form>
-      <div className="mt-7 pt-5 border-t text-sm text-slate-600">
+      <p className="mt-8 text-base text-stone-600">
         New student? <Link className="link" to="/register">Create an account</Link>
-      </div>
+      </p>
     </AuthShell>
   )
 }
