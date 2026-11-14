@@ -174,9 +174,9 @@ export default function Exam() {
   return (
     <div className="min-h-screen lg:min-h-0 lg:h-screen lg:flex lg:flex-col no-copy">
       <header className="bg-teal-900 text-white shrink-0">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+        <div className="px-4 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <Logo size={30} light />
+            <Logo size={36} light />
             <span className="hidden sm:block w-px h-6 bg-white/20" />
             <span className="font-semibold truncate text-teal-50">{data.title}</span>
           </div>

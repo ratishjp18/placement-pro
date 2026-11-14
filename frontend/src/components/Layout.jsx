@@ -16,8 +16,8 @@ export default function Layout() {
         isActive ? 'bg-white/12 text-white shadow-[inset_3px_0_0_#fbbf24]' : 'text-teal-100/70 hover:bg-white/8 hover:text-white'}`
     return (
       <div className="lg:flex lg:h-screen min-h-screen lg:min-h-0">
-        <aside className="lg:w-64 lg:shrink-0 bg-teal-900 text-white lg:sticky lg:top-0 lg:h-screen flex lg:flex-col items-center lg:items-stretch gap-4 p-4 lg:p-5">
-          <div className="lg:mb-6 lg:px-1"><Logo size={36} light /></div>
+        <aside className="lg:w-64 lg:shrink-0 bg-teal-900 text-white lg:sticky lg:top-0 lg:h-screen flex lg:flex-col items-center lg:items-stretch gap-4 p-4 lg:px-8 lg:pb-5 lg:pt-0">
+          <div className="lg:h-16 lg:flex lg:items-center lg:mb-3 shrink-0"><Logo size={36} light /></div>
           <nav className="flex lg:flex-col gap-1 flex-1">
             <div className="hidden lg:block text-[10px] font-bold uppercase tracking-[.14em] text-teal-300/60 px-3.5 mb-1">Workspace</div>
             <NavLink to="/company/exams" className={link}><Icon name="file" size={17} /> My exams</NavLink>
@@ -44,8 +44,8 @@ export default function Layout() {
   return (
     <div className="lg:h-screen lg:flex lg:flex-col">
       <header className="bg-white border-b border-stone-200 shrink-0">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Logo size={34} />
+        <div className="px-4 lg:px-8 h-16 flex items-center justify-between">
+          <Logo size={36} />
           {user && (
             <div className="flex items-center gap-4">
               <div className="text-right leading-tight hidden sm:block">

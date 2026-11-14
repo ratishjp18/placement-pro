@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context'
-import { Icon, Logo } from '../components/ui'
+import { Icon, Logo, PasswordInput } from '../components/ui'
 
 const STEPS = [
   ['Create your account', 'Just an email and a password. It takes under a minute.'],
@@ -48,10 +48,10 @@ function AuthPanel() {
 export function AuthShell({ children }) {
   return (
     <div className="min-h-screen lg:min-h-0 lg:h-screen grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <div className="flex flex-col px-6 sm:px-12 py-6 bg-white lg:h-screen lg:min-h-0">
-        <Logo size={38} />
+      <div className="flex flex-col px-4 lg:px-8 pb-5 pt-0 bg-white lg:h-screen lg:min-h-0">
+        <div className="h-16 flex items-center shrink-0"><Logo size={36} /></div>
         <div className="flex-1 flex items-center lg:min-h-0 lg:overflow-y-auto">
-          <div className="w-full max-w-sm mx-auto lg:mx-0 lg:ml-[10%] py-10 rise">{children}</div>
+          <div className="auth-lg w-full max-w-md mx-auto lg:mx-0 lg:ml-[8%] py-6 rise">{children}</div>
         </div>
         <p className="text-xs text-stone-400">© PlacementPro · Campus aptitude tests</p>
       </div>
@@ -84,9 +84,9 @@ export default function Login() {
 
   return (
     <AuthShell>
-      <h1 className="text-[1.9rem] font-extrabold tracking-tight leading-tight mb-1.5">Sign in</h1>
-      <p className="text-sm text-stone-500 mb-8">Use your email and password to continue.</p>
-      <form onSubmit={submit} className="space-y-4">
+      <h1 className="text-[2.6rem] font-extrabold tracking-tight leading-[1.05] mb-2">Sign in</h1>
+      <p className="text-base text-stone-500 mb-8">Use your email and password to continue.</p>
+      <form onSubmit={submit} className="space-y-5">
         {error && <p className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3.5 py-2.5">{error}</p>}
         <div className="field">
           <label className="lbl">Email</label>
@@ -94,11 +94,11 @@ export default function Login() {
         </div>
         <div className="field">
           <label className="lbl">Password</label>
-          <input type="password" required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput required placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <button className="btn btn-lg w-full" disabled={busy}>{busy ? 'Signing in…' : <>Continue <Icon name="arrow" size={16} /></>}</button>
       </form>
-      <p className="mt-8 text-sm text-stone-600">
+      <p className="mt-8 text-base text-stone-600">
         New student? <Link className="link" to="/register">Create an account</Link>
       </p>
     </AuthShell>

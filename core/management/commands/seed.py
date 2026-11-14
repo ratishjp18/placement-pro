@@ -64,11 +64,11 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         company_user, _ = User.objects.get_or_create(
-            username='acme', defaults={'role': 'company', 'first_name': 'Acme Corp', 'email': 'acme@example.com'})
+            username='acme', defaults={'role': 'company', 'first_name': 'SOLO CORP', 'email': 'acme@example.com'})
         company_user.set_password('company123')
         company_user.save()
         company, _ = Company.objects.get_or_create(
-            user=company_user, defaults={'name': 'Acme Corp', 'contact_person': 'Hiring Team'})
+            user=company_user, defaults={'name': 'SOLO CORP', 'contact_person': 'Hiring Team'})
 
         for i in range(1, 6):
             student, _ = User.objects.get_or_create(
