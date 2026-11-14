@@ -55,6 +55,9 @@ class ViolationLog(models.Model):
     class Kind(models.TextChoices):
         TAB_SWITCH = 'tab_switch', 'Tab switch'
         FULLSCREEN_EXIT = 'fullscreen_exit', 'Fullscreen exit'
+        NO_FACE = 'no_face', 'Face not visible'
+        MULTIPLE_FACES = 'multiple_faces', 'More than one face'
+        CAMERA_OFF = 'camera_off', 'Camera turned off'
 
     attempt = models.ForeignKey(Attempt, on_delete=models.CASCADE, related_name='violations')
     kind = models.CharField(max_length=20, choices=Kind.choices)

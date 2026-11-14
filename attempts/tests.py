@@ -92,6 +92,15 @@ class ExamFlowTests(ApiTestCase):
         a.refresh_from_db()
         self.assertEqual(a.submit_reason, 'violations')
 
+    def test_camera_violations_are_logged_and_counted(self):
+        a = self.start()
+        for kind in ('no_face', 'multiple_faces'):
+            r = self.post(f'/api/attempts/{a.pk}/violation/', {'type': kind})
+            self.assertFalse(r.json()['finished'])
+        r = self.post(f'/api/attempts/{a.pk}/violation/', {'type': 'camera_off'})
+        self.assertTrue(r.json()['finished'])
+        self.assertEqual(a.violations.count(), 3)
+
     def test_student_cannot_use_company_api(self):
         self.assertEqual(self.client.get('/api/company/exams/').status_code, 403)
         self.assertEqual(self.client.get('/api/company/questions/').status_code, 403)

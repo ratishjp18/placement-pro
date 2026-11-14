@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { Icon, Logo, Spinner } from '../components/ui'
+import { useFaceMonitor } from '../useFaceMonitor'
 
 /**
  * The exam screen. The server owns the timer, the scoring and the violation count;
@@ -54,6 +55,7 @@ export default function Exam() {
 
   const goToResult = () => {
     finished.current = true
+    cam.stop()
     leaveFullscreen()
     navigate(`/attempt/${id}/result`, { replace: true })
   }
@@ -68,9 +70,26 @@ export default function Exam() {
   const submit = () => {
     if (finished.current) return
     finished.current = true
+    cam.stop()
     leaveFullscreen()
     post('submit', {}).then(() => navigate(`/attempt/${id}/result`, { replace: true }))
   }
+
+  // ---- camera: the face must stay in view; the server counts and decides ----
+  const CAMERA_MESSAGES = {
+    no_face: 'Your face was not visible to the camera.',
+    multiple_faces: 'More than one face was seen by the camera.',
+    camera_off: 'Your camera was turned off.',
+  }
+  const cam = useFaceMonitor({
+    armed: !gate && !confirming,
+    onViolation: (type) => {
+      if (!active.current || finished.current) return
+      setWarn(`${CAMERA_MESSAGES[type]} This has been logged.`)
+      post('violation', { type }).then(handle)
+      if (type === 'camera_off') { setGateAgain(true); setGate(true) }
+    },
+  })
 
   // ---- countdown (display only) ----
   const submitRef = useRef(submit)
@@ -181,6 +200,9 @@ export default function Exam() {
             <span className="font-semibold truncate text-teal-50">{data.title}</span>
           </div>
           <div className="flex items-center gap-3 shrink-0">
+            <span className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${cam.status !== 'ready' || cam.faces !== 1 ? 'bg-rose-500 text-white' : 'bg-white/10 text-teal-100'}`}>
+              <Icon name="eye" size={14} /> {cam.status !== 'ready' ? 'Camera off' : cam.faces === 1 ? 'Face detected' : cam.faces === 0 ? 'No face' : cam.faces > 1 ? `${cam.faces} faces` : 'Checking…'}
+            </span>
             <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${violations > 0 ? 'bg-rose-500 text-white' : 'bg-white/10 text-teal-100'}`}>
               <Icon name="shield" size={14} /> {violations}/{data.max_violations}
             </span>
@@ -260,16 +282,44 @@ export default function Exam() {
         )}
       </main>
 
+      {/* live camera preview (stays in the corner for the whole test) */}
+      <div className={`fixed bottom-3 right-3 z-[60] w-28 sm:w-40 rounded-xl overflow-hidden shadow-xl border-2 bg-black ${cam.status === 'ready' || cam.status === 'starting' ? '' : 'opacity-0 pointer-events-none'} ${cam.status === 'ready' && cam.faces === 1 ? 'border-teal-400' : 'border-rose-500'}`}>
+        <video ref={cam.videoRef} muted playsInline className="w-full block -scale-x-100" />
+        <div className={`text-[11px] font-bold text-center py-0.5 text-white ${cam.faces === 1 ? 'bg-teal-700' : 'bg-rose-600'}`}>
+          {cam.faces === 1 ? 'Face detected' : cam.faces === 0 ? 'No face visible' : cam.faces > 1 ? 'Multiple faces' : 'Starting…'}
+        </div>
+      </div>
+
       {gate && (
         <div className="fixed inset-0 bg-teal-950/90 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-2xl p-8 max-w-md text-center shadow-2xl">
             <div className="flex justify-center mb-4"><Logo size={40} /></div>
-            <h2 className="text-xl font-extrabold mb-2">{gateAgain ? 'Return to fullscreen' : 'Ready to begin?'}</h2>
-            <p className="text-sm text-stone-600 mb-5">
-              The test runs in fullscreen. Leaving fullscreen or switching tabs counts as a violation.
-              The timer is already running on the server.
-            </p>
-            <button className="btn" onClick={enterFullscreen}>Enter fullscreen &amp; continue</button>
+            {cam.status !== 'ready' ? (
+              <>
+                <h2 className="text-xl font-extrabold mb-2">{gateAgain ? 'Turn your camera back on' : 'Turn on your camera'}</h2>
+                <p className="text-sm text-stone-600 mb-4">
+                  Your face must stay visible for the whole test. Video is analysed on your device and is never uploaded or recorded.
+                  If your face goes missing, a second person appears, or the camera is turned off, it is logged as a violation.
+                </p>
+                {cam.status === 'denied' && <p className="text-sm font-semibold text-rose-600 mb-4">Camera access was blocked. Allow it from the lock icon in the address bar, then try again.</p>}
+                {cam.status === 'error' && <p className="text-sm font-semibold text-rose-600 mb-4">We could not start the camera. Check that no other app is using it, then try again.</p>}
+                <button className="btn" disabled={cam.status === 'starting'} onClick={cam.start}>
+                  {cam.status === 'starting' ? 'Starting camera…' : 'Turn on camera'}
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-extrabold mb-2">{gateAgain ? 'Return to fullscreen' : 'Ready to begin?'}</h2>
+                <p className="text-sm text-stone-600 mb-4">
+                  The test runs in fullscreen. Leaving fullscreen or switching tabs counts as a violation.
+                  The timer is already running on the server.
+                </p>
+                <p className={`text-sm font-semibold mb-4 ${cam.faces === 1 ? 'text-teal-700' : 'text-rose-600'}`}>
+                  {cam.faces === 1 ? '✓ Camera on, face detected' : cam.faces > 1 ? 'Only you should be in view.' : 'Look at the camera so we can see your face.'}
+                </p>
+                <button className="btn" disabled={cam.faces !== 1} onClick={enterFullscreen}>Enter fullscreen &amp; continue</button>
+              </>
+            )}
           </div>
         </div>
       )}
