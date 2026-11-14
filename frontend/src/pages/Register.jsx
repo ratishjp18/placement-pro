@@ -32,7 +32,7 @@ export default function Register() {
   return (
     <AuthShell>
       <h1 className="text-[1.7rem] font-extrabold tracking-tight mb-1">Create your account</h1>
-      <p className="text-sm text-slate-500 mb-7">All you need is an email and a password.</p>
+      <p className="text-sm text-stone-500 mb-7">All you need is an email and a password.</p>
       <form onSubmit={submit} className="space-y-4">
         <Field label="Email" error={errors.email}>
           <input type="email" required autoFocus placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -42,7 +42,7 @@ export default function Register() {
         </Field>
         <button className="btn btn-lg w-full" disabled={busy}>{busy ? 'Creating…' : <>Create account <Icon name="arrow" size={16} /></>}</button>
       </form>
-      <p className="text-sm mt-7 pt-5 border-t text-slate-600">Already registered? <Link className="link" to="/login">Sign in</Link></p>
+      <p className="text-sm mt-7 pt-5 border-t text-stone-600">Already registered? <Link className="link" to="/login">Sign in</Link></p>
     </AuthShell>
   )
 }

@@ -17,11 +17,11 @@ export default function StudentHome() {
     <div className="max-w-xl mx-auto card p-8 text-center mt-10">
       <div className="text-4xl mb-3">🕒</div>
       <h1 className="page-title mb-2">No exam is open right now</h1>
-      <p className="text-slate-500 text-sm mb-5">When a company opens an aptitude test, you will see its instructions here after you log in.</p>
+      <p className="text-stone-500 text-sm mb-5">When a company opens an aptitude test, you will see its instructions here after you log in.</p>
       {data.upcoming.map((e) => (
-        <div key={e.id} className="text-left bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-2 text-sm">
+        <div key={e.id} className="text-left bg-teal-50 border border-teal-100 rounded-lg p-3 mb-2 text-sm">
           <strong>{e.title}</strong> · {e.company}<br />
-          <span className="text-slate-600">Starts {fmtDate(e.start_time)}</span>
+          <span className="text-stone-600">Starts {fmtDate(e.start_time)}</span>
         </div>
       ))}
     </div>
