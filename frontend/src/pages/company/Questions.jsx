@@ -57,7 +57,7 @@ export default function Questions() {
           {d.results.length === 0 && <tr><td colSpan="7" className="text-stone-500 text-center py-8">No questions found.</td></tr>}
           {d.results.map((q) => (
             <tr key={q.id} className={q.is_active ? '' : 'opacity-50'}>
-              <td>{q.text.length > 90 ? q.text.slice(0, 90) + '…' : q.text}</td>
+              <td className="max-w-xs truncate" title={q.text}>{q.text}</td>
               <td>{q.section_label}</td><td>{q.topic}</td><td>{q.difficulty_label}</td><td>{q.marks}</td><td>{q.correct_option}</td>
               <td className="whitespace-nowrap text-sm">
                 {confirmId === q.id ? (

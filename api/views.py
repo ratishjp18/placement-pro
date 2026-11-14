@@ -250,7 +250,7 @@ def company_results_csv(request, pk):
 
 # ---------------------------------------------------------------- company: questions
 
-PAGE_SIZE = 25
+PAGE_SIZE = 8
 
 
 @endpoint('GET', 'POST', role='company')

@@ -172,8 +172,8 @@ export default function Exam() {
   const urgent = left !== null && left <= 60
 
   return (
-    <div className="min-h-screen no-copy">
-      <header className="bg-teal-900 text-white">
+    <div className="min-h-screen lg:min-h-0 lg:h-screen lg:flex lg:flex-col no-copy">
+      <header className="bg-teal-900 text-white shrink-0">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             <Logo size={30} light />
@@ -194,12 +194,12 @@ export default function Exam() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="w-full max-w-4xl mx-auto px-4 py-3 lg:flex-1 lg:min-h-0 lg:overflow-y-auto">
         {warn && <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm font-medium">⚠ {warn}</div>}
 
         {/* numbered strip: jump to any question */}
-        <div className="card p-4 mb-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className={`card p-3 mb-3 ${reviewing ? 'hidden' : ''}`}>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <span className="text-sm font-bold">Questions</span>
             <div className="flex items-center gap-4 text-xs text-stone-500">
               <span className="inline-flex items-center gap-1.5"><i className="pal-key answered" /> Answered {count.answered}</span>
@@ -211,21 +211,21 @@ export default function Exam() {
         </div>
 
         {reviewing ? (
-          <section className="card p-6">
-            <h2 className="text-xl font-extrabold mb-1">Review your answers</h2>
-            <p className="text-sm text-stone-500 mb-4">
+          <section className="card p-5">
+            <h2 className="text-lg font-extrabold mb-0.5">Review your answers</h2>
+            <p className="text-sm text-stone-500 mb-3">
               {answers.length - unanswered} answered · {unanswered} not answered. Click a question to change its answer.
             </p>
-            <div className="divide-y divide-stone-200 border border-stone-200 rounded-xl mb-6 overflow-hidden">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 mb-4">
               {qs.map((question, i) => {
                 const a = answers[i]
                 return (
-                  <button key={question.id} onClick={() => go(i)} className="w-full text-left px-4 py-2.5 flex items-center gap-3 hover:bg-teal-50">
-                    <span className="w-7 h-7 shrink-0 rounded-full bg-stone-100 text-xs font-bold flex items-center justify-center">{i + 1}</span>
-                    <span className="flex-1 text-sm truncate">{question.text}</span>
+                  <button key={question.id} onClick={() => go(i)} className="text-left px-3 py-2 flex items-center gap-2 rounded-lg border border-stone-200 hover:border-teal-400 hover:bg-teal-50">
+                    <span className="w-6 h-6 shrink-0 rounded-full bg-stone-100 text-[11px] font-bold flex items-center justify-center">{i + 1}</span>
+                    <span className="flex-1 text-xs truncate">{question.text}</span>
                     {a.selected !== null
-                      ? <span className="badge badge-active">{String.fromCharCode(65 + a.selected)}. {question.options[a.selected].slice(0, 24)}</span>
-                      : <span className="badge badge-draft">Not answered</span>}
+                      ? <span className="badge badge-active shrink-0">{String.fromCharCode(65 + a.selected)}</span>
+                      : <span className="badge badge-draft shrink-0">—</span>}
                   </button>
                 )
               })}
@@ -236,20 +236,20 @@ export default function Exam() {
             </div>
           </section>
         ) : (
-          <section className="card p-6 sm:p-8">
-            <div className="flex items-center justify-between mb-5">
+          <section className="card p-5 lg:p-6">
+            <div className="flex items-center justify-between mb-3">
               <span className="badge badge-upcoming">{q.section_label}</span>
               <span className="text-sm text-stone-500">Question <strong className="text-stone-900">{idx + 1}</strong> of {qs.length}</span>
             </div>
-            <p className="text-[1.2rem] font-semibold leading-relaxed mb-7 whitespace-pre-wrap">{q.text}</p>
-            <div className="space-y-2.5 mb-8">
+            <p className="text-[1.2rem] font-semibold leading-relaxed mb-4 whitespace-pre-wrap">{q.text}</p>
+            <div className="space-y-2 mb-5">
               {q.options.map((text, pos) => (
                 <button key={pos} className={`opt ${cur.selected === pos ? 'sel' : ''}`} onClick={() => update({ selected: pos })}>
                   <span className="opt-letter">{String.fromCharCode(65 + pos)}</span><span>{text}</span>
                 </button>
               ))}
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-5 border-t border-stone-100">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-stone-100">
               <div className="flex gap-2">
                 <button className="btn btn-secondary" disabled={idx === 0} onClick={() => go(idx - 1)}>← Previous</button>
                 <button className="btn btn-secondary" onClick={() => update({ selected: null })}>Clear answer</button>

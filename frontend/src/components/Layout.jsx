@@ -15,7 +15,7 @@ export default function Layout() {
       `flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
         isActive ? 'bg-white/12 text-white shadow-[inset_3px_0_0_#fbbf24]' : 'text-teal-100/70 hover:bg-white/8 hover:text-white'}`
     return (
-      <div className="lg:flex min-h-screen">
+      <div className="lg:flex lg:h-screen min-h-screen lg:min-h-0">
         <aside className="lg:w-64 lg:shrink-0 bg-teal-900 text-white lg:sticky lg:top-0 lg:h-screen flex lg:flex-col items-center lg:items-stretch gap-4 p-4 lg:p-5">
           <div className="lg:mb-6 lg:px-1"><Logo size={36} light /></div>
           <nav className="flex lg:flex-col gap-1 flex-1">
@@ -36,14 +36,14 @@ export default function Layout() {
             </button>
           </div>
         </aside>
-        <main className="flex-1 min-w-0 px-5 py-7 lg:px-10 lg:py-9 rise"><div className="max-w-5xl"><Outlet /></div></main>
+        <main className="flex-1 min-w-0 px-5 py-7 lg:px-10 lg:py-8 lg:h-screen lg:overflow-y-auto rise"><div className="max-w-5xl"><Outlet /></div></main>
       </div>
     )
   }
 
   return (
-    <>
-      <header className="bg-white border-b border-stone-200">
+    <div className="lg:h-screen lg:flex lg:flex-col">
+      <header className="bg-white border-b border-stone-200 shrink-0">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <Logo size={34} />
           {user && (
@@ -57,7 +57,7 @@ export default function Layout() {
           )}
         </div>
       </header>
-      <main className="max-w-5xl mx-auto px-4 py-8 rise"><Outlet /></main>
-    </>
+      <main className="lg:flex-1 lg:min-h-0 lg:overflow-y-auto"><div className="max-w-5xl mx-auto px-4 py-6 rise"><Outlet /></div></main>
+    </div>
   )
 }

@@ -83,7 +83,7 @@ table.data tbody tr:hover td { background: #fbfaf7; }
 .pal-key.answered { background: #ccfbf1; border-color: #5eead4; }
 .pal-key.visited { background: #fef3c7; border-color: #fcd34d; }
 
-.opt { display: flex; align-items: center; gap: .9rem; width: 100%; text-align: left; padding: .8rem 1rem; border: 1.5px solid #e0ddd4;
+.opt { display: flex; align-items: center; gap: .9rem; width: 100%; text-align: left; padding: .62rem 1rem; border: 1.5px solid #e0ddd4;
   border-radius: .75rem; background: #fff; cursor: pointer; white-space: pre-wrap; transition: border-color .15s, background .15s; }
 .opt:hover { border-color: #5eead4; background: #f7fdfc; }
 .opt .opt-letter { width: 1.9rem; height: 1.9rem; border-radius: 999px; background: #f1efe9; color: #57534e; font-weight: 800; font-size: .82rem;
@@ -95,3 +95,10 @@ table.data tbody tr:hover td { background: #fbfaf7; }
 .no-copy, .no-copy * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .no-copy img { -webkit-user-drag: none; }
 @media print { .no-copy { display: none !important; } }
+
+/* ---------- STATIC PAGE: no window scrolling on desktop; everything scales to the screen height ---------- */
+html { font-size: clamp(11px, 2.1vh, 16px); height: 100%; }
+body, #root { height: 100%; }
+@media (min-width: 1024px) and (min-height: 520px) {
+  html, body { overflow: hidden; }
+}
